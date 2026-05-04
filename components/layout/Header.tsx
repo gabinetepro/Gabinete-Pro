@@ -3,9 +3,10 @@ import DarkModeToggle from "./DarkModeToggle";
 interface HeaderProps {
   title?: string;
   subtitle?: string;
+  rightContent?: React.ReactNode;
 }
 
-export default function Header({ title, subtitle }: HeaderProps) {
+export default function Header({ title, subtitle, rightContent }: HeaderProps) {
   return (
     <header className="h-16 border-b border-border bg-surface/80 backdrop-blur-sm flex items-center justify-between px-6">
       <div>
@@ -14,7 +15,8 @@ export default function Header({ title, subtitle }: HeaderProps) {
         )}
         {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
       </div>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
+        {rightContent}
         <DarkModeToggle />
       </div>
     </header>
