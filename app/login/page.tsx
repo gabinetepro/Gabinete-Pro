@@ -25,6 +25,8 @@ export default function LoginPage() {
       setError(
         error.message === "Invalid login credentials"
           ? "E-mail ou senha incorretos."
+          : error.message === "Email not confirmed"
+          ? "E-mail ainda não confirmado. Verifique sua caixa de entrada."
           : error.message
       );
       setLoading(false);
@@ -32,7 +34,6 @@ export default function LoginPage() {
     }
 
     router.push("/dashboard");
-    router.refresh();
   }
 
   async function handleForgotPassword() {
