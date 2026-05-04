@@ -15,7 +15,7 @@ import {
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/criar-conteudo", label: "Criar Conteúdo", icon: PenSquare },
+  { href: "/criar-conteudo", label: "Estúdio de Conteúdo", icon: PenSquare },
   { href: "/kanban", label: "Central de Conteúdo", icon: Layout },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/pautas", label: "Pautas", icon: FileText },

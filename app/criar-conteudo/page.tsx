@@ -16,25 +16,24 @@ import Button from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 
-type TipoConteudo =
-  | "instagram"
-  | "facebook"
-  | "twitter"
-  | "release"
-  | "discurso"
-  | "oficio";
+// ── Types ──────────────────────────────────────────────────────────
+
+type Plataforma = "instagram" | "facebook" | "twitter" | "imprensa" | "discurso" | "oficio";
 type Tom = "formal" | "informal" | "emotivo" | "tecnico";
 
 interface ConteudoSalvo {
   id: string;
   titulo: string;
   tipo: string;
+  canal: string | null;
+  formato: string | null;
   conteudo: string;
   created_at: string;
 }
 
 interface FormState {
-  tipo: TipoConteudo;
+  plataforma: Plataforma;
+  formato: string;
   tema: string;
   tom: Tom;
   nomePolitico: string;
@@ -46,42 +45,47 @@ interface GeracaoResult {
   hashtags: string;
 }
 
-const TIPO_OPTIONS: { value: TipoConteudo; label: string }[] = [
-  { value: "instagram", label: "Post para Instagram" },
-  { value: "facebook", label: "Post para Facebook" },
-  { value: "twitter", label: "Post para Twitter/X" },
-  { value: "release", label: "Release para imprensa" },
-  { value: "discurso", label: "Discurso" },
-  { value: "oficio", label: "Ofício" },
+// ── Config ─────────────────────────────────────────────────────────
+
+const PLATAFORMA_OPTIONS: { value: Plataforma; label: string; emoji: string }[] = [
+  { value: "instagram", label: "Instagram",  emoji: "📸" },
+  { value: "facebook",  label: "Facebook",   emoji: "📘" },
+  { value: "twitter",   label: "Twitter/X",  emoji: "🐦" },
+  { value: "imprensa",  label: "Imprensa",   emoji: "📰" },
+  { value: "discurso",  label: "Discurso",   emoji: "🎤" },
+  { value: "oficio",    label: "Ofício",     emoji: "📄" },
 ];
+
+const FORMATO_MAP: Record<Plataforma, string[]> = {
+  instagram: ["Reels", "Sequência de Stories", "Carrossel", "Foto Avulsa"],
+  facebook:  ["Reels", "Carrossel", "Foto Avulsa"],
+  imprensa:  ["Nota de Imprensa", "Release"],
+  discurso:  [],
+  twitter:   [],
+  oficio:    [],
+};
 
 const TOM_OPTIONS: { value: Tom; label: string; desc: string }[] = [
-  { value: "formal", label: "Formal", desc: "Institucional" },
-  { value: "informal", label: "Informal", desc: "Próximo" },
-  { value: "emotivo", label: "Emotivo", desc: "Inspirador" },
-  { value: "tecnico", label: "Técnico", desc: "Informativo" },
+  { value: "formal",   label: "Formal",   desc: "Institucional" },
+  { value: "informal", label: "Informal", desc: "Próximo"       },
+  { value: "emotivo",  label: "Emotivo",  desc: "Inspirador"    },
+  { value: "tecnico",  label: "Técnico",  desc: "Informativo"   },
 ];
 
-const TIPO_DISPLAY: Record<string, string> = {
-  instagram: "Instagram",
-  facebook: "Facebook",
-  twitter: "Twitter/X",
-  release: "Release",
-  discurso: "Discurso",
-  oficio: "Ofício",
-  post: "Post",
-  nota: "Nota",
-  pronunciamento: "Pronunciamento",
-};
+// ── Helpers ────────────────────────────────────────────────────────
 
-const TIPO_DB_MAP: Record<TipoConteudo, string> = {
-  instagram: "post",
-  facebook: "post",
-  twitter: "post",
-  release: "release",
-  discurso: "pronunciamento",
-  oficio: "nota",
-};
+function getDbTipo(plataforma: string, formato: string): string {
+  if (plataforma === "discurso") return "pronunciamento";
+  if (plataforma === "imprensa") return formato === "Release" ? "release" : "nota";
+  if (plataforma === "oficio")   return "nota";
+  return "post";
+}
+
+function historyLabel(canal: string | null, formato: string | null, tipo: string): string {
+  const parts = [canal, formato].filter(Boolean) as string[];
+  if (parts.length === 0) return tipo;
+  return parts.map((s) => s.charAt(0).toUpperCase() + s.slice(1)).join(" · ");
+}
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -93,31 +97,32 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d atrás`;
 }
 
+// ── Page ───────────────────────────────────────────────────────────
+
 export default function CriarConteudoPage() {
   const { user, profile } = useAuth();
 
   const [form, setForm] = useState<FormState>({
-    tipo: "instagram",
-    tema: "",
-    tom: "formal",
+    plataforma: "instagram",
+    formato:    "Foto Avulsa",
+    tema:       "",
+    tom:        "formal",
     nomePolitico: "",
     partidoCargo: "",
   });
 
-  const [result, setResult] = useState<GeracaoResult | null>(null);
+  const [result,         setResult]         = useState<GeracaoResult | null>(null);
   const [editedConteudo, setEditedConteudo] = useState("");
-  const [generating, setGenerating] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [history, setHistory] = useState<ConteudoSalvo[]>([]);
+  const [generating,     setGenerating]     = useState(false);
+  const [saving,         setSaving]         = useState(false);
+  const [copied,         setCopied]         = useState(false);
+  const [error,          setError]          = useState<string | null>(null);
+  const [saveSuccess,    setSaveSuccess]    = useState(false);
+  const [history,        setHistory]        = useState<ConteudoSalvo[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
-    if (profile?.nome) {
-      setForm((f) => ({ ...f, nomePolitico: profile.nome }));
-    }
+    if (profile?.nome) setForm((f) => ({ ...f, nomePolitico: profile.nome }));
   }, [profile]);
 
   const loadHistory = useCallback(async () => {
@@ -125,7 +130,7 @@ export default function CriarConteudoPage() {
     setHistoryLoading(true);
     const { data } = await supabase
       .from("conteudos")
-      .select("id, titulo, tipo, conteudo, created_at")
+      .select("id, titulo, tipo, canal, formato, conteudo, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -133,9 +138,13 @@ export default function CriarConteudoPage() {
     setHistoryLoading(false);
   }, [user]);
 
-  useEffect(() => {
-    loadHistory();
-  }, [loadHistory]);
+  useEffect(() => { loadHistory(); }, [loadHistory]);
+
+  function updatePlataforma(p: Plataforma) {
+    const formatos = FORMATO_MAP[p];
+    setForm((f) => ({ ...f, plataforma: p, formato: formatos[0] ?? "" }));
+    setError(null);
+  }
 
   function updateForm(field: keyof FormState, value: string) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -166,15 +175,9 @@ export default function CriarConteudoPage() {
       if (!res.ok) throw new Error(data.error ?? "Erro desconhecido");
 
       setResult(data);
-      const combined =
-        data.conteudo + (data.hashtags ? `\n\n${data.hashtags}` : "");
-      setEditedConteudo(combined);
+      setEditedConteudo(data.conteudo + (data.hashtags ? `\n\n${data.hashtags}` : ""));
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Erro ao gerar conteúdo. Tente novamente."
-      );
+      setError(err instanceof Error ? err.message : "Erro ao gerar conteúdo. Tente novamente.");
     } finally {
       setGenerating(false);
     }
@@ -190,15 +193,18 @@ export default function CriarConteudoPage() {
     if (!user || !editedConteudo.trim()) return;
     setSaving(true);
 
-    const titulo = `${TIPO_DISPLAY[form.tipo]} — ${form.tema.slice(0, 60)}${form.tema.length > 60 ? "…" : ""}`;
+    const plataformaLabel = form.plataforma.charAt(0).toUpperCase() + form.plataforma.slice(1);
+    const formatoPart     = form.formato ? ` · ${form.formato}` : "";
+    const titulo = `${plataformaLabel}${formatoPart} — ${form.tema.slice(0, 50)}${form.tema.length > 50 ? "…" : ""}`;
 
     const { error: saveErr } = await supabase.from("conteudos").insert({
-      user_id: user.id,
+      user_id:  user.id,
       titulo,
-      tipo: TIPO_DB_MAP[form.tipo],
+      tipo:     getDbTipo(form.plataforma, form.formato),
       conteudo: editedConteudo,
-      canal: form.tipo,
-      status: "rascunho",
+      canal:    form.plataforma,
+      formato:  form.formato || null,
+      status:   "rascunho",
     });
 
     setSaving(false);
@@ -223,52 +229,83 @@ export default function CriarConteudoPage() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const charCount = editedConteudo.length;
-  const isTwitter = form.tipo === "twitter";
+  const charCount   = editedConteudo.length;
+  const isTwitter   = form.plataforma === "twitter";
   const charWarning = isTwitter && charCount > 280;
+  const formatos    = FORMATO_MAP[form.plataforma];
 
   return (
     <AppShell
-      title="Criar Conteúdo"
+      title="Estúdio de Conteúdo"
       subtitle="Gere textos políticos com inteligência artificial"
     >
       <div className="max-w-6xl mx-auto space-y-6">
-        {/* Grid: formulário + resultado */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-          {/* ── FORMULÁRIO ─────────────────────────────── */}
+
+          {/* ── FORMULÁRIO ──────────────────────────────────────── */}
           <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center flex-shrink-0">
                 <Sparkles size={15} className="text-white" />
               </div>
               <h2 className="text-base font-semibold text-slate-100">
-                Configurar Geração
+                Estúdio de Conteúdo com IA
               </h2>
             </div>
 
-            {/* Tipo */}
+            {/* Nível 1 — Plataforma */}
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                Tipo de conteúdo
+              <label className="block text-xs font-medium text-slate-400 mb-2">
+                Plataforma
               </label>
-              <select
-                value={form.tipo}
-                onChange={(e) => updateForm("tipo", e.target.value)}
-                className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-blue-500 transition-colors"
-              >
-                {TIPO_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>
-                    {o.label}
-                  </option>
+              <div className="grid grid-cols-3 gap-2">
+                {PLATAFORMA_OPTIONS.map((p) => (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => updatePlataforma(p.value)}
+                    className={`py-3 px-2 rounded-lg border transition-all flex flex-col items-center gap-1.5 ${
+                      form.plataforma === p.value
+                        ? "bg-gradient-to-br from-blue-600 to-emerald-500 border-transparent text-white shadow-glow-blue"
+                        : "border-border text-slate-400 hover:border-blue-500/40 hover:text-slate-200 bg-background"
+                    }`}
+                  >
+                    <span className="text-xl leading-none">{p.emoji}</span>
+                    <span className="text-[10px] font-semibold">{p.label}</span>
+                  </button>
                 ))}
-              </select>
+              </div>
             </div>
+
+            {/* Nível 2 — Formato (condicional) */}
+            {formatos.length > 0 && (
+              <div>
+                <label className="block text-xs font-medium text-slate-400 mb-2">
+                  Formato
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {formatos.map((f) => (
+                    <button
+                      key={f}
+                      type="button"
+                      onClick={() => updateForm("formato", f)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                        form.formato === f
+                          ? "bg-gradient-to-r from-blue-600 to-emerald-500 border-transparent text-white"
+                          : "border-border text-slate-400 hover:border-blue-500/40 hover:text-slate-200 bg-background"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Tema */}
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                Tema / Assunto{" "}
-                <span className="text-red-400">*</span>
+                Tema / Assunto <span className="text-red-400">*</span>
               </label>
               <textarea
                 value={form.tema}
@@ -297,9 +334,7 @@ export default function CriarConteudoPage() {
                     }`}
                   >
                     <span className="block font-semibold">{o.label}</span>
-                    <span className="block opacity-70 text-[10px]">
-                      {o.desc}
-                    </span>
+                    <span className="block opacity-70 text-[10px]">{o.desc}</span>
                   </button>
                 ))}
               </div>
@@ -334,7 +369,6 @@ export default function CriarConteudoPage() {
               />
             </div>
 
-            {/* Erro */}
             {error && (
               <div className="bg-red-500/10 border border-red-500/30 rounded-lg px-4 py-3 text-sm text-red-400">
                 {error}
@@ -353,7 +387,7 @@ export default function CriarConteudoPage() {
             </Button>
           </div>
 
-          {/* ── RESULTADO ──────────────────────────────── */}
+          {/* ── RESULTADO ───────────────────────────────────────── */}
           <div className="bg-surface border border-border rounded-xl p-6 flex flex-col min-h-[480px]">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2.5">
@@ -366,28 +400,18 @@ export default function CriarConteudoPage() {
               </div>
 
               {result && (
-                <span
-                  className={`text-xs font-mono tabular-nums ${
-                    charWarning ? "text-red-400" : "text-slate-500"
-                  }`}
-                >
+                <span className={`text-xs font-mono tabular-nums ${charWarning ? "text-red-400" : "text-slate-500"}`}>
                   {charCount}
-                  {isTwitter && (
-                    <span className="text-slate-600"> / 280</span>
-                  )}
+                  {isTwitter && <span className="text-slate-600"> / 280</span>}
                 </span>
               )}
             </div>
 
-            {/* Skeleton durante geração */}
+            {/* Skeleton */}
             {generating && (
               <div className="flex-1 space-y-3 animate-pulse pt-2">
                 {[100, 85, 70, 100, 60, 90, 75, 55, 80].map((w, i) => (
-                  <div
-                    key={i}
-                    className="h-3.5 bg-slate-700/60 rounded"
-                    style={{ width: `${w}%` }}
-                  />
+                  <div key={i} className="h-3.5 bg-slate-700/60 rounded" style={{ width: `${w}%` }} />
                 ))}
               </div>
             )}
@@ -399,9 +423,7 @@ export default function CriarConteudoPage() {
                   <Sparkles size={28} className="text-slate-600" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">
-                    O conteúdo gerado aparecerá aqui.
-                  </p>
+                  <p className="text-sm text-slate-500">O conteúdo gerado aparecerá aqui.</p>
                   <p className="text-xs text-slate-600 mt-1">
                     Configure o formulário e clique em &quot;Gerar com IA&quot;.
                   </p>
@@ -415,15 +437,20 @@ export default function CriarConteudoPage() {
                 <textarea
                   value={editedConteudo}
                   onChange={(e) => setEditedConteudo(e.target.value)}
-                  className={`flex-1 min-h-[280px] bg-background border rounded-lg px-4 py-3 text-sm text-slate-200 leading-relaxed focus:outline-none focus:border-blue-500 transition-colors resize-none font-mono ${
+                  className={`flex-1 min-h-[280px] bg-background border rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500 transition-colors resize-none ${
                     charWarning ? "border-red-500/50" : "border-border"
                   }`}
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "15px",
+                    lineHeight: "1.7",
+                    color: "#e2e8f0",
+                  }}
                 />
 
                 {charWarning && (
                   <p className="text-xs text-red-400">
-                    Atenção: o texto excede 280 caracteres (limite do
-                    Twitter/X).
+                    Atenção: o texto excede 280 caracteres (limite do Twitter/X).
                   </p>
                 )}
 
@@ -435,32 +462,15 @@ export default function CriarConteudoPage() {
                 )}
 
                 <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleCopy}
-                    className="justify-center"
-                  >
+                  <Button size="sm" variant="ghost" onClick={handleCopy} className="justify-center">
                     {copied ? <Check size={13} /> : <Copy size={13} />}
                     {copied ? "Copiado!" : "Copiar"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    onClick={handleSave}
-                    loading={saving}
-                    className="justify-center"
-                  >
+                  <Button size="sm" variant="secondary" onClick={handleSave} loading={saving} className="justify-center">
                     {!saving && <Save size={13} />}
                     {saving ? "Salvando…" : "Salvar"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={handleGenerate}
-                    disabled={generating}
-                    className="justify-center"
-                  >
+                  <Button size="sm" variant="ghost" onClick={handleGenerate} disabled={generating} className="justify-center">
                     <RefreshCw size={13} />
                     Refazer
                   </Button>
@@ -470,7 +480,7 @@ export default function CriarConteudoPage() {
           </div>
         </div>
 
-        {/* ── HISTÓRICO ────────────────────────────────── */}
+        {/* ── HISTÓRICO ───────────────────────────────────────────── */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <h2 className="text-base font-semibold text-slate-100 mb-4">
             Últimos Conteúdos Salvos
@@ -487,12 +497,8 @@ export default function CriarConteudoPage() {
           {!historyLoading && history.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 gap-2 text-center">
               <FileText size={32} className="text-slate-700" />
-              <p className="text-sm text-slate-500">
-                Nenhum conteúdo salvo ainda.
-              </p>
-              <p className="text-xs text-slate-600">
-                Os conteúdos que você salvar aparecerão aqui.
-              </p>
+              <p className="text-sm text-slate-500">Nenhum conteúdo salvo ainda.</p>
+              <p className="text-xs text-slate-600">Os conteúdos que você salvar aparecerão aqui.</p>
             </div>
           )}
 
@@ -508,17 +514,13 @@ export default function CriarConteudoPage() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-slate-200 truncate">
-                      {item.titulo}
-                    </p>
+                    <p className="text-sm text-slate-200 truncate">{item.titulo}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-xs text-slate-600">
-                        {TIPO_DISPLAY[item.tipo] ?? item.tipo}
+                        {historyLabel(item.canal, item.formato, item.tipo)}
                       </span>
                       <span className="text-slate-700">·</span>
-                      <span className="text-xs text-slate-600">
-                        {timeAgo(item.created_at)}
-                      </span>
+                      <span className="text-xs text-slate-600">{timeAgo(item.created_at)}</span>
                     </div>
                   </div>
 

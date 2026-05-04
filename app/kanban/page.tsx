@@ -27,6 +27,7 @@ interface Conteudo {
   titulo: string;
   tipo: string;
   canal: string | null;
+  formato: string | null;
   conteudo: string | null;
   status: KanbanStatus;
   created_at: string;
@@ -137,7 +138,7 @@ export default function KanbanPage() {
     setLoading(true);
     const { data } = await supabase
       .from("conteudos")
-      .select("id, titulo, tipo, canal, conteudo, status, created_at")
+      .select("id, titulo, tipo, canal, formato, conteudo, status, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setConteudos((data as Conteudo[]) ?? []);
@@ -386,7 +387,7 @@ export default function KanbanPage() {
                           <span
                             className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold ${tipoCfg.bg} ${tipoCfg.text} mb-2`}
                           >
-                            {tipoCfg.label}
+                            {tipoCfg.label}{card.formato ? ` · ${card.formato}` : ""}
                           </span>
 
                           {/* Title */}
@@ -458,7 +459,7 @@ export default function KanbanPage() {
                 const tipoCfg = getTipo(selectedCard.canal, selectedCard.tipo);
                 return (
                   <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${tipoCfg.bg} ${tipoCfg.text}`}>
-                    {tipoCfg.label}
+                    {tipoCfg.label}{selectedCard.formato ? ` · ${selectedCard.formato}` : ""}
                   </span>
                 );
               })()}
