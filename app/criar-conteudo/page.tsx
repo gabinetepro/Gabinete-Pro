@@ -103,13 +103,19 @@ export default function CriarConteudoPage() {
   const { user, profile } = useAuth();
 
   const [form, setForm] = useState<FormState>({
-    plataforma: "instagram",
-    formato:    "Foto Avulsa",
-    tema:       "",
-    tom:        "formal",
+    plataforma:   "instagram",
+    formato:      "Foto Avulsa",
+    tema:         "",
+    tom:          "formal",
     nomePolitico: "",
     partidoCargo: "",
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tema = params.get("tema");
+    if (tema) setForm((f) => ({ ...f, tema }));
+  }, []);
 
   const [result,         setResult]         = useState<GeracaoResult | null>(null);
   const [editedConteudo, setEditedConteudo] = useState("");
