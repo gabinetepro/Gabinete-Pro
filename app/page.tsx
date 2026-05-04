@@ -31,13 +31,13 @@ export default function LandingPage() {
           </span>
           <nav className="flex items-center gap-3">
             <Link
-              href="/dashboard"
+              href="/login"
               className="px-4 py-2 text-sm font-medium text-slate-400 hover:text-slate-100 transition-colors"
             >
               Entrar
             </Link>
             <Link
-              href="#planos"
+              href="/cadastro"
               className="px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:from-blue-500 hover:to-emerald-400 transition-all hover:shadow-glow"
             >
               Começar agora
@@ -535,12 +535,12 @@ export default function LandingPage() {
               <p className="text-white/75 text-lg max-w-xl mx-auto mb-10">
                 Comece hoje com 7 dias grátis. Sem fidelidade, cancele quando quiser.
               </p>
-              <a
-                href="#planos"
+              <Link
+                href="/cadastro"
                 className="inline-flex items-center gap-2 px-10 py-4 text-base font-bold rounded-xl bg-white text-blue-700 hover:bg-blue-50 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105 active:scale-100"
               >
                 Começar agora →
-              </a>
+              </Link>
             </div>
           </div>
         </div>
