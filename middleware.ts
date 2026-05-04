@@ -11,12 +11,13 @@ const PROTECTED = [
   "/eleitores",
   "/equipe",
   "/configuracoes",
+  "/demandas",
 ];
 
 const AUTH_ONLY = ["/login", "/cadastro"];
 
 // Rotas sempre públicas — middleware não toca nelas
-const PUBLIC = ["/", "/api/webhook", "/auth"];
+const PUBLIC = ["/", "/api/webhook", "/auth", "/p/"];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
