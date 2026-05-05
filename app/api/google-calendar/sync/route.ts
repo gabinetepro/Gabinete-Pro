@@ -28,11 +28,13 @@ function extractTime(dt?: string): string | null {
 export async function POST() {
   const auth = await getGoogleToken();
   if (!auth) {
+    console.error("[sync] getGoogleToken() returned null — user not authenticated or token missing");
     return NextResponse.json(
       { error: "Google não conectado. Reconecte sua conta.", needsReconnect: true },
       { status: 401 }
     );
   }
+  console.log("[sync] Token obtained for user:", auth.userId);
 
   const cookieStore = cookies();
   const supabase = createServerClient(
@@ -70,6 +72,7 @@ export async function POST() {
 
   const gcalData = (await gcalRes.json()) as { items?: GoogleCalEvent[] };
   const items = (gcalData.items ?? []).filter((e) => e.status !== "cancelled");
+  console.log(`[sync] Google Calendar returned ${gcalData.items?.length ?? 0} events (${items.length} non-cancelled)`);
 
   // Get already-synced google_event_ids for this user to avoid duplicates
   const { data: existing } = await supabase
@@ -104,5 +107,6 @@ export async function POST() {
     }
   }
 
+  console.log(`[sync] Inserted ${toInsert.length} new events (${synced.size} already synced)`);
   return NextResponse.json({ count: toInsert.length });
 }

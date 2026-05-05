@@ -210,16 +210,15 @@ function InviteModal({ open, onClose, userId, onSaved, editing }: InviteModalPro
         return;
       }
 
-      // Send Supabase magic-link invite so the user can set their password
-      const { error: inviteErr } = await supabase.auth.signInWithOtp({
-        email: form.email.trim().toLowerCase(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: `${window.location.origin}/auth/callback`,
-        },
+      // Send invite email using "Invite user" template (not magic link)
+      const inviteRes = await fetch("/api/invite-member", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email.trim().toLowerCase() }),
       });
+      const inviteData = await inviteRes.json() as { ok?: boolean; error?: string; alreadyExists?: boolean };
 
-      if (inviteErr) {
+      if (!inviteRes.ok && !inviteData.alreadyExists) {
         setSuccess("Membro cadastrado. Não foi possível enviar o email de convite automaticamente — compartilhe o link de acesso manualmente.");
       } else {
         setSuccess("Convite enviado! O membro receberá um email para criar sua senha.");

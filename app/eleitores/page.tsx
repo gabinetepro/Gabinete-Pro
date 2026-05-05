@@ -43,7 +43,7 @@ interface Eleitor {
   temas_interesse: string[] | null;
   aceita_comunicados: boolean;
   preferencia_contato: string | null;
-  observacao: string | null;
+  observacoes: string | null;
   tags: string[] | null;
   status: string;
   created_at: string;
@@ -73,7 +73,7 @@ interface FormData {
   temas_interesse: string[];
   aceita_comunicados: boolean;
   preferencia_contato: string;
-  observacao: string;
+  observacoes: string;
   tags: string[];
 }
 
@@ -109,7 +109,7 @@ const IMPORT_FIELDS = [
   { key: "cidade",     label: "Cidade",           required: false },
   { key: "uf",         label: "UF (2 letras)",    required: false },
   { key: "engajamento",label: "Engajamento",      required: false },
-  { key: "observacao", label: "Observação",       required: false },
+  { key: "observacoes", label: "Observação",       required: false },
 ];
 
 const emptyForm: FormData = {
@@ -119,7 +119,7 @@ const emptyForm: FormData = {
   numero: "", complemento: "", bairro: "", cidade: "", uf: "",
   como_conheceu: "", votou_antes: "", intencao_voto: "",
   engajamento: "", temas_interesse: [], aceita_comunicados: false,
-  preferencia_contato: "", observacao: "", tags: [],
+  preferencia_contato: "", observacoes: "", tags: [],
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -175,7 +175,7 @@ function eleitorToForm(e: Eleitor): FormData {
     temas_interesse:     e.temas_interesse ?? [],
     aceita_comunicados:  e.aceita_comunicados ?? false,
     preferencia_contato: e.preferencia_contato ?? "",
-    observacao:          e.observacao ?? "",
+    observacoes:          e.observacoes ?? "",
     tags:                e.tags ?? [],
   };
 }
@@ -206,7 +206,7 @@ function buildPayload(f: FormData, userId: string) {
     temas_interesse:      f.temas_interesse,
     aceita_comunicados:   f.aceita_comunicados,
     preferencia_contato:  f.preferencia_contato || null,
-    observacao:           f.observacao || null,
+    observacoes:           f.observacoes || null,
     tags:                 f.tags,
     status:               "ativo",
   };
@@ -553,8 +553,8 @@ function EleitorFormModal({ open, onClose, editingEleitor, userId, onSaved }: Fo
                 <textarea
                   className={`${inputCls} resize-none`}
                   rows={6}
-                  value={formData.observacao}
-                  onChange={e => set("observacao", e.target.value)}
+                  value={formData.observacoes}
+                  onChange={e => set("observacoes", e.target.value)}
                   placeholder="Anotações, contexto, observações importantes sobre este eleitor..."
                 />
               </div>
@@ -712,7 +712,7 @@ function ImportModal({ open, onClose, userId, onImported }: ImportModalProps) {
         cidade:     getCol("cidade", row) || null,
         uf:         getCol("uf", row)?.toUpperCase().slice(0, 2) || null,
         engajamento:getCol("engajamento", row) || null,
-        observacao: getCol("observacao", row) || null,
+        observacoes: getCol("observacoes", row) || null,
         status:     "ativo",
         tags:       [] as string[],
         temas_interesse: [] as string[],
@@ -1125,7 +1125,7 @@ export default function EleitoresPage() {
        e.escolaridade??'', e.faixa_renda??'', e.cep??'', e.rua??'', e.numero??'', e.complemento??'',
        e.bairro??'', e.cidade??'', e.uf??'', e.como_conheceu??'', e.votou_antes??'', e.intencao_voto??'',
        e.engajamento??'', (e.temas_interesse??[]).join(';'), e.aceita_comunicados?'Sim':'Não',
-       e.preferencia_contato??'', (e.tags??[]).join(';'), e.observacao??'', fmtDate(e.created_at),
+       e.preferencia_contato??'', (e.tags??[]).join(';'), e.observacoes??'', fmtDate(e.created_at),
       ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')
     );
 

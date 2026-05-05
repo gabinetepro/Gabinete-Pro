@@ -22,15 +22,31 @@ export async function getGoogleToken(): Promise<GoogleToken | null> {
   );
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) {
+    console.error("[googleAuth] getUser() returned null — session may be missing");
+    return null;
+  }
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileErr } = await supabase
     .from("profiles")
     .select("google_access_token, google_refresh_token, google_token_expiry, google_connected")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.google_connected || !profile.google_access_token) return null;
+  if (profileErr) {
+    console.error("[googleAuth] profile fetch error:", profileErr.message);
+    return null;
+  }
+
+  if (!profile?.google_connected) {
+    console.warn("[googleAuth] google_connected is false for user:", user.id);
+    return null;
+  }
+
+  if (!profile.google_access_token) {
+    console.warn("[googleAuth] google_access_token is null for user:", user.id);
+    return null;
+  }
 
   const expiry = profile.google_token_expiry ? new Date(profile.google_token_expiry) : null;
   const needsRefresh = !expiry || expiry.getTime() - Date.now() < 5 * 60 * 1000;
@@ -39,8 +55,12 @@ export async function getGoogleToken(): Promise<GoogleToken | null> {
     return { accessToken: profile.google_access_token as string, userId: user.id };
   }
 
-  if (!profile.google_refresh_token) return null;
+  if (!profile.google_refresh_token) {
+    console.warn("[googleAuth] token expired but no refresh_token stored");
+    return null;
+  }
 
+  console.log("[googleAuth] Access token expired — refreshing...");
   const refreshRes = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -52,7 +72,11 @@ export async function getGoogleToken(): Promise<GoogleToken | null> {
     }).toString(),
   });
 
-  if (!refreshRes.ok) return null;
+  if (!refreshRes.ok) {
+    const errText = await refreshRes.text();
+    console.error("[googleAuth] token refresh failed:", refreshRes.status, errText);
+    return null;
+  }
 
   const refreshed = (await refreshRes.json()) as { access_token: string; expires_in: number };
   const newExpiry = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();

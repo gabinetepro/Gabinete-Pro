@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import {
-  Send, CheckCircle2, RefreshCw, ChevronDown, AlertCircle,
+  Send, CheckCircle2, RefreshCw, ChevronDown, AlertCircle, MapPin,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
@@ -17,6 +17,7 @@ interface PoliticoProfile {
   partido: string | null;
   municipio: string | null;
   estado: string | null;
+  foto_url: string | null;
   avatar_url: string | null;
   nome_gabinete: string | null;
 }
@@ -61,7 +62,7 @@ function maskPhone(v: string) {
 }
 
 function generateProtocolo() {
-  const ts = Date.now().toString(36).toUpperCase();
+  const ts   = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
   return `DEM-${ts}-${rand}`;
 }
@@ -72,18 +73,20 @@ function initials(nome: string) {
 
 // ── Avatar ─────────────────────────────────────────────────────────────────
 
-function PoliticianAvatar({ profile }: { profile: PoliticoProfile }) {
-  const nome = profile.nome_politico ?? profile.nome;
-  if (profile.avatar_url) {
+function PoliticianPhoto({ profile }: { profile: PoliticoProfile }) {
+  const nome     = profile.nome_politico ?? profile.nome;
+  const photoUrl = profile.foto_url ?? profile.avatar_url;
+
+  if (photoUrl) {
     return (
-      <div
-        className="w-20 h-20 rounded-2xl shadow-lg overflow-hidden flex-shrink-0"
-        style={{ backgroundImage: `url(${profile.avatar_url})`, backgroundSize: "cover", backgroundPosition: "center" }}
-      />
+      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full shadow-xl overflow-hidden flex-shrink-0 ring-4 ring-white/20">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={photoUrl} alt={nome} className="w-full h-full object-cover" />
+      </div>
     );
   }
   return (
-    <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white font-bold text-2xl shadow-lg flex-shrink-0">
+    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white font-black text-3xl shadow-xl flex-shrink-0 ring-4 ring-white/20">
       {initials(nome)}
     </div>
   );
@@ -101,25 +104,25 @@ function ConfirmationScreen({
   onNovaMensagem: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-      <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-6">
-        <CheckCircle2 size={32} className="text-green-600" />
+    <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+      <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-5 shadow-sm">
+        <CheckCircle2 size={32} className="text-emerald-600" />
       </div>
       <h2 className="text-2xl font-bold text-slate-800 mb-2">Mensagem recebida!</h2>
-      <p className="text-slate-600 mb-6 max-w-sm">
-        Obrigado, <strong>{nomeEnviou}</strong>! Sua mensagem foi recebida com sucesso.
+      <p className="text-slate-500 text-sm mb-6 max-w-xs leading-relaxed">
+        Obrigado, <strong className="text-slate-700">{nomeEnviou}</strong>!
         Em breve nossa equipe entrará em contato.
       </p>
-      <div className="bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 mb-8">
-        <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Número do protocolo</p>
-        <p className="font-mono font-bold text-blue-700 text-lg">{protocolo}</p>
-        <p className="text-xs text-slate-400 mt-1">Guarde este número para acompanhar sua solicitação</p>
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl px-6 py-4 mb-8 w-full max-w-xs">
+        <p className="text-[11px] font-bold text-blue-500 uppercase tracking-widest mb-2">Protocolo</p>
+        <p className="font-mono font-bold text-blue-700 text-lg tracking-wide">{protocolo}</p>
+        <p className="text-xs text-slate-400 mt-1.5">Guarde este número para acompanhar</p>
       </div>
       <button
         onClick={onNovaMensagem}
-        className="flex items-center gap-2 px-5 py-2.5 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition-colors"
+        className="flex items-center gap-2 px-6 py-2.5 rounded-xl border-2 border-blue-600 text-blue-600 font-semibold text-sm hover:bg-blue-50 transition-colors"
       >
-        <RefreshCw size={15} />
+        <RefreshCw size={14} />
         Enviar outra mensagem
       </button>
     </div>
@@ -144,7 +147,7 @@ export default function PublicDemandasPage() {
     async function load() {
       const { data } = await supabase
         .from("profiles")
-        .select("id, nome, nome_politico, cargo, partido, municipio, estado, avatar_url, nome_gabinete")
+        .select("id, nome, nome_politico, cargo, partido, municipio, estado, foto_url, avatar_url, nome_gabinete")
         .eq("slug", slug)
         .single();
 
@@ -164,12 +167,12 @@ export default function PublicDemandasPage() {
     e.preventDefault();
     if (!profile) return;
 
-    if (!form.nome.trim())     { setError("Nome é obrigatório.");              return; }
-    if (!form.email.trim())    { setError("Email é obrigatório.");             return; }
+    if (!form.nome.trim())     { setError("Nome é obrigatório.");               return; }
+    if (!form.email.trim())    { setError("Email é obrigatório.");              return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) { setError("Email inválido."); return; }
-    if (!form.tipo)            { setError("Selecione o tipo de mensagem.");    return; }
-    if (!form.categoria)       { setError("Selecione a categoria.");           return; }
-    if (!form.mensagem.trim()) { setError("Escreva sua mensagem.");            return; }
+    if (!form.tipo)            { setError("Selecione o tipo de mensagem.");     return; }
+    if (!form.categoria)       { setError("Selecione a categoria.");            return; }
+    if (!form.mensagem.trim()) { setError("Escreva sua mensagem.");             return; }
     if (!form.lgpd)            { setError("Aceite os termos para continuar."); return; }
 
     setSending(true);
@@ -200,22 +203,22 @@ export default function PublicDemandasPage() {
     setProtocolo(prot);
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  // ── Loading ────────────────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <RefreshCw size={24} className="text-blue-500 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 flex items-center justify-center">
+        <RefreshCw size={28} className="text-white/70 animate-spin" />
       </div>
     );
   }
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 p-8 text-center">
-        <AlertCircle size={40} className="text-slate-400" />
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center gap-4 p-8 text-center">
+        <AlertCircle size={48} className="text-slate-300" />
         <h1 className="text-xl font-bold text-slate-700">Página não encontrada</h1>
-        <p className="text-slate-500 max-w-xs">
+        <p className="text-slate-500 max-w-xs text-sm">
           Esta página não existe ou o link pode estar incorreto.
         </p>
       </div>
@@ -223,48 +226,65 @@ export default function PublicDemandasPage() {
   }
 
   const nomePolitico = profile.nome_politico ?? profile.nome;
-  const localidade   = [profile.municipio, profile.estado].filter(Boolean).join(" — ");
+  const localidade   = [profile.municipio, profile.estado].filter(Boolean).join(", ");
 
-  const inputCls = "w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/30 transition-all shadow-sm";
-  const selectCls = `${inputCls} appearance-none`;
+  const inputCls   = "w-full bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all shadow-sm";
+  const selectCls  = `${inputCls} appearance-none`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50/30">
-      {/* Top bar */}
-      <div className="bg-white border-b border-slate-100 shadow-sm">
-        <div className="max-w-xl mx-auto px-4 py-3">
-          <p className="text-xs text-slate-400 text-center">Gabinete Pro · Canal oficial de atendimento</p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50">
 
-      <div className="max-w-xl mx-auto px-4 py-8">
-        {/* Politician card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 mb-6 flex items-center gap-4">
-          <PoliticianAvatar profile={profile} />
-          <div className="flex-1 min-w-0">
-            <h1 className="text-xl font-bold text-slate-800 truncate">{nomePolitico}</h1>
-            {profile.cargo && (
-              <p className="text-sm font-medium text-blue-600 mt-0.5">{profile.cargo}</p>
-            )}
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {profile.partido && (
-                <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full font-medium">
-                  {profile.partido}
-                </span>
+      {/* ── Hero Banner ──────────────────────────────────────────── */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 pb-20 pt-10 px-4 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/3 pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/2 -translate-x-1/4 pointer-events-none" />
+
+        <div className="max-w-md mx-auto relative">
+          {/* Logo badge */}
+          <p className="text-blue-200/80 text-xs font-semibold tracking-widest uppercase text-center mb-8">
+            🏛️ Gabinete Pro · Atendimento ao Cidadão
+          </p>
+
+          {/* Politician info */}
+          <div className="flex flex-col items-center text-center gap-4">
+            <PoliticianPhoto profile={profile} />
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                {nomePolitico}
+              </h1>
+              {profile.cargo && (
+                <p className="text-blue-200 font-semibold text-sm mt-1">{profile.cargo}</p>
               )}
-              {localidade && (
-                <span className="text-xs text-slate-500">{localidade}</span>
-              )}
+              <div className="flex items-center justify-center flex-wrap gap-2 mt-3">
+                {profile.partido && (
+                  <span className="text-xs bg-white/15 text-white px-3 py-1 rounded-full font-semibold backdrop-blur-sm">
+                    {profile.partido}
+                  </span>
+                )}
+                {localidade && (
+                  <span className="flex items-center gap-1 text-xs bg-white/10 text-blue-100 px-3 py-1 rounded-full backdrop-blur-sm">
+                    <MapPin size={10} />
+                    {localidade}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Form or confirmation */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
-            <h2 className="text-white font-semibold text-base">Envie uma mensagem</h2>
-            <p className="text-blue-200 text-sm mt-0.5">
-              {profile.nome_gabinete ?? `${nomePolitico} responde pessoalmente.`}
+      {/* ── Form Card (overlapping hero) ─────────────────────────── */}
+      <div className="max-w-md mx-auto px-4 -mt-10 pb-10 relative z-10">
+        <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-slate-100">
+
+          {/* Card header */}
+          <div className="px-6 py-5 border-b border-slate-100">
+            <h2 className="text-slate-800 font-bold text-lg">
+              {profile.nome_gabinete ?? "Fale com o gabinete"}
+            </h2>
+            <p className="text-slate-400 text-sm mt-0.5">
+              Sua mensagem será respondida em breve pela equipe.
             </p>
           </div>
 
@@ -275,30 +295,31 @@ export default function PublicDemandasPage() {
               onNovaMensagem={() => { setForm(EMPTY_FORM); setProtocolo(null); }}
             />
           ) : (
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+
               {error && (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600">
+                <div className="flex items-center gap-2.5 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-600">
                   <AlertCircle size={15} className="flex-shrink-0" />
                   {error}
                 </div>
               )}
 
               {/* Nome + Email */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                    Nome completo <span className="text-red-400">*</span>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">
+                    Nome completo <span className="text-red-400 normal-case">*</span>
                   </label>
                   <input
                     className={inputCls}
-                    placeholder="Seu nome"
+                    placeholder="Seu nome completo"
                     value={form.nome}
                     onChange={(e) => setF("nome", e.target.value)}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                    Email <span className="text-red-400">*</span>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">
+                    Email <span className="text-red-400 normal-case">*</span>
                   </label>
                   <input
                     type="email"
@@ -311,9 +332,9 @@ export default function PublicDemandasPage() {
               </div>
 
               {/* Telefone + Bairro */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Telefone</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Telefone</label>
                   <input
                     className={inputCls}
                     placeholder="(00) 00000-0000"
@@ -322,7 +343,7 @@ export default function PublicDemandasPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">Bairro</label>
+                  <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">Bairro</label>
                   <input
                     className={inputCls}
                     placeholder="Seu bairro"
@@ -334,23 +355,23 @@ export default function PublicDemandasPage() {
 
               {/* Tipo */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-2">
-                  Tipo de mensagem <span className="text-red-400">*</span>
+                <label className="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">
+                  Tipo de mensagem <span className="text-red-400 normal-case">*</span>
                 </label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="grid grid-cols-4 gap-2">
                   {TIPO_OPTIONS.map((t) => (
                     <button
                       key={t.value}
                       type="button"
                       onClick={() => setF("tipo", t.value)}
-                      className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                      className={`flex flex-col items-center gap-1.5 p-3 rounded-2xl border-2 transition-all text-sm font-medium ${
                         form.tipo === t.value
-                          ? "border-blue-500 bg-blue-50 text-blue-700"
-                          : "border-slate-200 text-slate-600 hover:border-blue-300 hover:bg-blue-50/40"
+                          ? "border-blue-500 bg-blue-50 text-blue-700 shadow-sm shadow-blue-100"
+                          : "border-slate-200 text-slate-500 hover:border-blue-200 hover:bg-blue-50/40"
                       }`}
                     >
-                      <span className="text-xl">{t.emoji}</span>
-                      <span className="text-xs">{t.label}</span>
+                      <span className="text-xl leading-none">{t.emoji}</span>
+                      <span className="text-[11px] leading-none">{t.label}</span>
                     </button>
                   ))}
                 </div>
@@ -358,8 +379,8 @@ export default function PublicDemandasPage() {
 
               {/* Categoria */}
               <div>
-                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                  Categoria <span className="text-red-400">*</span>
+                <label className="block text-xs font-bold text-slate-500 mb-1.5 uppercase tracking-wide">
+                  Categoria <span className="text-red-400 normal-case">*</span>
                 </label>
                 <div className="relative">
                   <select
@@ -377,10 +398,10 @@ export default function PublicDemandasPage() {
               {/* Mensagem */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-semibold text-slate-600">
-                    Mensagem <span className="text-red-400">*</span>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                    Mensagem <span className="text-red-400 normal-case">*</span>
                   </label>
-                  <span className={`text-xs ${form.mensagem.length > 480 ? "text-red-500" : "text-slate-400"}`}>
+                  <span className={`text-xs ${form.mensagem.length > 480 ? "text-red-500" : "text-slate-300"}`}>
                     {form.mensagem.length}/500
                   </span>
                 </div>
@@ -388,24 +409,24 @@ export default function PublicDemandasPage() {
                   className={`${inputCls} resize-none`}
                   rows={5}
                   maxLength={500}
-                  placeholder="Descreva sua mensagem, dúvida ou demanda com o máximo de detalhes possível…"
+                  placeholder="Descreva com detalhes sua mensagem, dúvida ou solicitação…"
                   value={form.mensagem}
                   onChange={(e) => setF("mensagem", e.target.value)}
                 />
               </div>
 
               {/* LGPD */}
-              <label className="flex items-start gap-3 cursor-pointer">
+              <label className="flex items-start gap-3 cursor-pointer p-3.5 rounded-xl bg-slate-50 border border-slate-100">
                 <input
                   type="checkbox"
                   checked={form.lgpd}
                   onChange={(e) => setF("lgpd", e.target.checked)}
-                  className="mt-0.5 w-4 h-4 accent-blue-600 cursor-pointer flex-shrink-0"
+                  className="mt-0.5 w-4 h-4 accent-blue-600 cursor-pointer flex-shrink-0 rounded"
                 />
                 <span className="text-xs text-slate-500 leading-relaxed">
-                  Li e aceito que meus dados sejam utilizados para responder à minha mensagem, conforme a{" "}
-                  <strong className="text-slate-700">Lei Geral de Proteção de Dados (LGPD)</strong>.
-                  Os dados não serão compartilhados com terceiros.
+                  Autorizo o uso dos meus dados para retorno desta mensagem, conforme a{" "}
+                  <strong className="text-slate-600">Lei Geral de Proteção de Dados (LGPD)</strong>.
+                  Seus dados não serão compartilhados.
                 </span>
               </label>
 
@@ -413,7 +434,7 @@ export default function PublicDemandasPage() {
               <button
                 type="submit"
                 disabled={sending}
-                className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 transition-all shadow-md shadow-blue-500/20"
+                className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold text-sm hover:from-blue-500 hover:to-indigo-500 disabled:opacity-50 transition-all shadow-lg shadow-blue-500/25 active:scale-[0.98]"
               >
                 {sending
                   ? <><RefreshCw size={16} className="animate-spin" /> Enviando…</>
@@ -425,9 +446,9 @@ export default function PublicDemandasPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-slate-400 mt-6">
-          Página oficial do gabinete · Desenvolvido com{" "}
-          <span className="text-blue-500 font-medium">Gabinete Pro</span>
+        <p className="text-center text-xs text-slate-400 mt-5">
+          Canal oficial de atendimento ao cidadão ·{" "}
+          <span className="text-blue-500 font-semibold">Gabinete Pro</span>
         </p>
       </div>
     </div>
