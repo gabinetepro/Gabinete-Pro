@@ -129,7 +129,10 @@ function buildPrompt(
   tema: string,
   tom: string,
   nomePolitico: string,
-  partidoCargo: string
+  partidoCargo: string,
+  respostas: string[],
+  tomVoz: string,
+  textoReferencia: string
 ): string {
   const tomLabel = TOM_LABEL[tom] ?? tom;
   const formatoLabel = formato ? ` — ${formato}` : "";
@@ -142,11 +145,26 @@ function buildPrompt(
     ? '\n\nApós o conteúdo, adicione uma linha em branco e "HASHTAGS:" com até 10 hashtags relevantes separadas por espaço.'
     : "";
 
+  const contextLines: string[] = [];
+  if (tomVoz?.trim()) {
+    contextLines.push(`Tom de voz e estilo do político: ${tomVoz.trim()}`);
+  }
+  if (textoReferencia?.trim()) {
+    contextLines.push(`Exemplo de texto de referência do político:\n${textoReferencia.trim()}`);
+  }
+  if (respostas.length > 0) {
+    contextLines.push(`Informações adicionais fornecidas:\n${respostas.map((r, i) => `${i + 1}. ${r}`).join("\n")}`);
+  }
+
+  const contextBlock = contextLines.length > 0
+    ? `\n\nContexto adicional:\n${contextLines.join("\n\n")}`
+    : "";
+
   return `Crie um conteúdo de ${plataformaLabel}${formatoLabel} com tom ${tomLabel} para o(a) político(a) ${nomePolitico}${partidoCargo ? ` (${partidoCargo})` : ""}.
 
 Tema/assunto: ${tema}
 
-${instructions}${hashtagLine}
+${instructions}${hashtagLine}${contextBlock}
 
 Gere apenas o conteúdo final, pronto para uso. Não adicione explicações, títulos como "Aqui está:" ou comentários.`;
 }
@@ -164,13 +182,26 @@ function getMaxTokens(plataforma: string, formato: string): number {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { plataforma, formato = "", tema, tom, nomePolitico, partidoCargo } = body as {
+    const {
+      plataforma,
+      formato = "",
+      tema,
+      tom,
+      nomePolitico,
+      partidoCargo,
+      respostas = [],
+      tomVoz = "",
+      textoReferencia = "",
+    } = body as {
       plataforma: string;
       formato?: string;
       tema: string;
       tom: string;
       nomePolitico: string;
       partidoCargo: string;
+      respostas?: string[];
+      tomVoz?: string;
+      textoReferencia?: string;
     };
 
     if (!plataforma || !tema?.trim() || !tom) {
@@ -188,7 +219,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: buildPrompt(plataforma, formato, tema, tom, nomePolitico, partidoCargo),
+          content: buildPrompt(plataforma, formato, tema, tom, nomePolitico, partidoCargo, respostas, tomVoz, textoReferencia),
         },
       ],
     });
