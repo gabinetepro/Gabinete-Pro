@@ -37,7 +37,7 @@ interface Eleitor {
   cidade: string | null;
   uf: string | null;
   como_conheceu: string | null;
-  ja_votou: string | null;
+  votou_antes: string | null;
   intencao_voto: string | null;
   engajamento: string | null;
   temas_interesse: string[] | null;
@@ -67,7 +67,7 @@ interface FormData {
   cidade: string;
   uf: string;
   como_conheceu: string;
-  ja_votou: string;
+  votou_antes: string;
   intencao_voto: string;
   engajamento: string;
   temas_interesse: string[];
@@ -117,7 +117,7 @@ const emptyForm: FormData = {
   data_nascimento: "", genero: "", profissao: "",
   escolaridade: "", faixa_renda: "", cep: "", rua: "",
   numero: "", complemento: "", bairro: "", cidade: "", uf: "",
-  como_conheceu: "", ja_votou: "", intencao_voto: "",
+  como_conheceu: "", votou_antes: "", intencao_voto: "",
   engajamento: "", temas_interesse: [], aceita_comunicados: false,
   preferencia_contato: "", observacao: "", tags: [],
 };
@@ -169,7 +169,7 @@ function eleitorToForm(e: Eleitor): FormData {
     cidade:              e.cidade ?? "",
     uf:                  e.uf ?? "",
     como_conheceu:       e.como_conheceu ?? "",
-    ja_votou:            e.ja_votou ?? "",
+    votou_antes:         e.votou_antes ?? "",
     intencao_voto:       e.intencao_voto ?? "",
     engajamento:         e.engajamento ?? "",
     temas_interesse:     e.temas_interesse ?? [],
@@ -200,7 +200,7 @@ function buildPayload(f: FormData, userId: string) {
     cidade:               f.cidade || null,
     uf:                   f.uf || null,
     como_conheceu:        f.como_conheceu || null,
-    ja_votou:             f.ja_votou || null,
+    votou_antes:          f.votou_antes || null,
     intencao_voto:        f.intencao_voto || null,
     engajamento:          f.engajamento || null,
     temas_interesse:      f.temas_interesse,
@@ -453,7 +453,7 @@ function EleitorFormModal({ open, onClose, editingEleitor, userId, onSaved }: Fo
                 </div>
                 <div>
                   <label className="label">Já votou no político?</label>
-                  <select className={selectCls} value={formData.ja_votou} onChange={e => set("ja_votou", e.target.value)}>
+                  <select className={selectCls} value={formData.votou_antes} onChange={e => set("votou_antes", e.target.value)}>
                     <option value="">Selecionar</option>
                     {JA_VOTOU_OPT.map(o => <option key={o}>{o}</option>)}
                   </select>
@@ -1123,7 +1123,7 @@ export default function EleitoresPage() {
     const lines = rows.map(e =>
       [e.nome, e.email??'', e.telefone??'', e.whatsapp??'', e.data_nascimento??'', e.genero??'', e.profissao??'',
        e.escolaridade??'', e.faixa_renda??'', e.cep??'', e.rua??'', e.numero??'', e.complemento??'',
-       e.bairro??'', e.cidade??'', e.uf??'', e.como_conheceu??'', e.ja_votou??'', e.intencao_voto??'',
+       e.bairro??'', e.cidade??'', e.uf??'', e.como_conheceu??'', e.votou_antes??'', e.intencao_voto??'',
        e.engajamento??'', (e.temas_interesse??[]).join(';'), e.aceita_comunicados?'Sim':'Não',
        e.preferencia_contato??'', (e.tags??[]).join(';'), e.observacao??'', fmtDate(e.created_at),
       ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')

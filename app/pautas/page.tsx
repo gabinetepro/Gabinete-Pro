@@ -19,6 +19,7 @@ import {
   PenSquare,
   Newspaper,
   ExternalLink,
+  Clock,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
@@ -420,6 +421,7 @@ export default function PautasPage() {
   const [pautasIA, setPautasIA]     = useState<PautaIA[]>([]);
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError]     = useState<string | null>(null);
+  const [cacheInfo, setCacheInfo]   = useState<{ created_at: string; expires_at: string } | null>(null);
 
   // Pautas salvas
   const [pautasSalvas, setPautasSalvas]   = useState<PautaSalva[]>([]);
@@ -494,6 +496,32 @@ export default function PautasPage() {
     if (activeTab === "salvas" && user) loadPautasSalvas();
   }, [activeTab, user, loadPautasSalvas]);
 
+  // ── Load cached pautas ──────────────────────────────────────────
+
+  const loadCachedPautas = useCallback(async () => {
+    if (!user) return;
+    const now = new Date().toISOString();
+    const { data } = await supabase
+      .from("pautas_geradas")
+      .select("pautas, created_at, expires_at")
+      .eq("user_id", user.id)
+      .gt("expires_at", now)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (data?.pautas) {
+      const pautas: PautaIA[] = (data.pautas as PautaIA[]).map((p, i) => ({
+        ...p, id: `cache-${i}`, salva: false,
+      }));
+      setPautasIA(pautas);
+      setCacheInfo({ created_at: data.created_at, expires_at: data.expires_at });
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (!authLoading && user) loadCachedPautas();
+  }, [authLoading, user, loadCachedPautas]);
+
   // ── Clipping ────────────────────────────────────────────────────
 
   const fetchClipping = useCallback(async () => {
@@ -555,8 +583,9 @@ export default function PautasPage() {
 
   // ── Generate pautas ─────────────────────────────────────────────
 
-  async function handleGenerate() {
-    if (!politicalProfile) return;
+  async function handleGenerate(forceRefresh = false) {
+    if (!politicalProfile || !user) return;
+    if (!forceRefresh && pautasIA.length > 0 && cacheInfo) return;
     setGenerating(true);
     setGenError(null);
     try {
@@ -572,11 +601,24 @@ export default function PautasPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro desconhecido");
-      const pautas: PautaIA[] = (data.pautas as PautaIA[]).map((p, i) => ({
+      const rawPautas = data.pautas as PautaIA[];
+      const pautas: PautaIA[] = rawPautas.map((p, i) => ({
         ...p, id: `${Date.now()}-${i}`, salva: false,
       }));
       setPautasIA(pautas);
       setActiveTab("pautas-ia");
+
+      // Persist to cache (delete stale, insert fresh)
+      await supabase.from("pautas_geradas").delete().eq("user_id", user.id);
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000).toISOString();
+      await supabase.from("pautas_geradas").insert({
+        user_id: user.id,
+        pautas: rawPautas,
+        created_at: now.toISOString(),
+        expires_at: expiresAt,
+      });
+      setCacheInfo({ created_at: now.toISOString(), expires_at: expiresAt });
     } catch (err) {
       setGenError(err instanceof Error ? err.message : "Erro ao gerar pautas.");
     } finally {
@@ -810,7 +852,7 @@ export default function PautasPage() {
   const headerRight =
     activeTab === "pautas-ia" ? (
       <button
-        onClick={handleGenerate}
+        onClick={() => handleGenerate(true)}
         disabled={generating}
         className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-emerald-500 text-white text-sm font-semibold hover:opacity-90 disabled:opacity-60 transition-opacity"
       >
@@ -945,6 +987,33 @@ export default function PautasPage() {
         {/* ── PAUTAS DA IA ─────────────────────────────────────────── */}
         {activeTab === "pautas-ia" && (
           <>
+            {/* Cache info banner */}
+            {cacheInfo && !generating && pautasIA.length > 0 && (() => {
+              const createdAt = new Date(cacheInfo.created_at);
+              const expiresAt = new Date(cacheInfo.expires_at);
+              const hoursAgo  = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60));
+              const minsAgo   = Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60)) % 60;
+              const validUntil = expiresAt.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+              const ageLabel   = hoursAgo > 0 ? `${hoursAgo}h${minsAgo > 0 ? ` ${minsAgo}min` : ""}` : `${minsAgo}min`;
+              return (
+                <div className="flex items-center gap-3 bg-slate-800/60 border border-slate-700/50 rounded-lg px-4 py-2.5">
+                  <Clock size={13} className="text-slate-500 flex-shrink-0" />
+                  <p className="text-xs text-slate-400 flex-1">
+                    Pautas geradas há <span className="text-slate-300 font-medium">{ageLabel}</span>
+                    {" · "}válidas até <span className="text-slate-300 font-medium">{validUntil}</span>
+                  </p>
+                  <button
+                    onClick={() => handleGenerate(true)}
+                    disabled={generating}
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-400 hover:text-blue-300 px-3 py-1 rounded-lg hover:bg-blue-500/10 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw size={11} />
+                    Atualizar
+                  </button>
+                </div>
+              );
+            })()}
+
             {generating && (
               <div>
                 <div className="mb-4 flex items-center gap-3 bg-blue-500/10 border border-blue-500/20 rounded-lg px-4 py-3">
@@ -976,7 +1045,7 @@ export default function PautasPage() {
                   para {p.municipio} com base nas suas áreas de interesse.
                 </p>
                 <button
-                  onClick={handleGenerate}
+                  onClick={() => handleGenerate(true)}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-r from-blue-600 to-emerald-500 text-white text-sm font-semibold hover:opacity-90 transition-opacity"
                 >
                   <Sparkles size={15} />

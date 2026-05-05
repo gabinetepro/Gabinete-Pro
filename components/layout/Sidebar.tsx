@@ -32,8 +32,9 @@ export default function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-sidebar border-r border-border flex flex-col z-40">
       <div className="p-6 border-b border-border">
-        <h1 className="text-xl font-extrabold bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent tracking-tight">
-          🏛️ Gabinete Pro
+        <h1 className="text-xl font-extrabold tracking-tight flex items-center gap-1.5">
+          <span style={{ fontFamily: "'Apple Color Emoji', 'Segoe UI Emoji', sans-serif" }}>🏛️</span>
+          <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent">Gabinete Pro</span>
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">Gestão política inteligente</p>
       </div>

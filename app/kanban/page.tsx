@@ -8,7 +8,7 @@ import Link from "next/link";
 import {
   Plus, Search, ChevronRight, ChevronLeft, Trash2, Copy, Check,
   LayoutGrid, List, MoreVertical, Calendar, Paperclip,
-  RefreshCw, X, ArrowRight, Eye, Clock, CheckSquare, Square, FileUp,
+  RefreshCw, X, ArrowRight, Eye, Clock, CheckSquare, Square, FileUp, Sparkles,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
@@ -164,6 +164,53 @@ function Avatar({ name }: { name: string }) {
       {initials(name)}
     </div>
   );
+}
+
+// ── Checklist suggestions ──────────────────────────────────────────────────
+
+function getChecklistSuggestions(canal: string | null, tipo: string): string[] {
+  const key = (canal ?? tipo).toLowerCase();
+  if (["instagram", "facebook", "reels", "stories", "carrossel"].some(k => key.includes(k))) {
+    return [
+      "Definir gancho de abertura",
+      "Revisar hashtags",
+      "Verificar legenda",
+      "Agendar horário de publicação",
+      "Preparar arte/vídeo",
+    ];
+  }
+  if (["release", "imprensa", "nota"].some(k => key.includes(k))) {
+    return [
+      "Revisar com assessor jurídico",
+      "Confirmar dados e datas",
+      "Enviar para aprovação",
+      "Lista de contatos da imprensa",
+      "Agendar envio",
+    ];
+  }
+  if (key.includes("discurso") || key.includes("pronunciamento")) {
+    return [
+      "Revisar com o político",
+      "Imprimir via de emergência",
+      "Confirmar tempo de fala",
+      "Treinar leitura em voz alta",
+    ];
+  }
+  if (key.includes("projeto") || key.includes("lei") || key.includes("oficio")) {
+    return [
+      "Revisar embasamento legal",
+      "Consultar jurídico",
+      "Coletar assinaturas",
+      "Protocolar na câmara",
+      "Divulgar à imprensa",
+    ];
+  }
+  return [
+    "Revisar conteúdo",
+    "Obter aprovação",
+    "Agendar publicação",
+    "Confirmar distribuição",
+  ];
 }
 
 // ── CardModal ──────────────────────────────────────────────────────────────
@@ -370,6 +417,22 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
                   </span>
                 )}
               </label>
+              <button
+                onClick={() => {
+                  const suggestions = getChecklistSuggestions(card.canal, card.tipo);
+                  const existing = checklist.map(c => c.text);
+                  const toAdd = suggestions.filter(s => !existing.includes(s));
+                  if (toAdd.length === 0) return;
+                  setChecklist(prev => [
+                    ...prev,
+                    ...toAdd.map(text => ({ id: crypto.randomUUID(), text, done: false })),
+                  ]);
+                }}
+                className="flex items-center gap-1 text-[11px] font-medium text-violet-400 hover:text-violet-300 px-2 py-1 rounded-lg hover:bg-violet-500/10 transition-colors"
+              >
+                <Sparkles size={11} />
+                Sugerir checklist
+              </button>
             </div>
             {checkTotal > 0 && (
               <div className="h-1 bg-slate-700 rounded-full mb-3 overflow-hidden">

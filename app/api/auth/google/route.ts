@@ -7,6 +7,10 @@ const REDIRECT_URI =
   "https://gabinete-pro.vercel.app/api/auth/google/callback";
 
 export async function GET() {
+  if (!process.env.GOOGLE_CLIENT_ID) console.error("[google/auth] GOOGLE_CLIENT_ID env var is missing");
+  if (!process.env.GOOGLE_CLIENT_SECRET) console.error("[google/auth] GOOGLE_CLIENT_SECRET env var is missing");
+  console.log("[google/auth] REDIRECT_URI:", REDIRECT_URI);
+
   const cookieStore = cookies();
 
   const supabase = createServerClient(
@@ -37,6 +41,7 @@ export async function GET() {
   googleUrl.searchParams.set("prompt",        "consent");
   googleUrl.searchParams.set("state",         state);
 
+  console.log("[google/auth] Redirecting to Google OAuth:", googleUrl.toString());
   const response = NextResponse.redirect(googleUrl.toString());
   response.cookies.set("google_oauth_state", state, {
     httpOnly: true,
