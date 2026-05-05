@@ -377,13 +377,32 @@ export default function DemandasPage() {
         .order("created_at", { ascending: false }),
       supabase
         .from("profiles")
-        .select("slug, cargo, nome_politico")
+        .select("slug, cargo, nome_politico, nome")
         .eq("id", user.id)
         .single(),
     ]);
 
     setDemandas((dem as Demanda[]) ?? []);
-    if (prof?.slug) setSlug(prof.slug);
+
+    if (prof?.slug) {
+      setSlug(prof.slug);
+    } else if (user && prof) {
+      const p = prof as { slug?: string | null; nome_politico?: string | null; nome?: string | null };
+      const baseName = p.nome_politico || p.nome || "";
+      if (baseName) {
+        const normalized = baseName.toLowerCase().normalize("NFD");
+        let generated = "";
+        for (const ch of normalized) {
+          const code = ch.charCodeAt(0);
+          if (code >= 0x0300 && code <= 0x036f) continue; // strip diacritics
+          generated += (/[a-z0-9]/).test(ch) ? ch : "-";
+        }
+        generated = generated.replace(/-+/g, "-").replace(/^-|-$/g, "").substring(0, 50);
+        await supabase.from("profiles").update({ slug: generated }).eq("id", user.id);
+        setSlug(generated);
+      }
+    }
+
     setLoading(false);
   }, [user]);
 

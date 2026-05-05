@@ -115,6 +115,36 @@ Formate cada slide exatamente assim:
 Use linguagem acessível e inclua emojis quando adequado.`;
   }
 
+  // ── Projeto de Lei ────────────────────────────────────────────
+  if (plataforma === "projeto-lei") {
+    return `Redija um Projeto de Lei (PL) com estrutura formal completa:
+
+CÂMARA MUNICIPAL / ASSEMBLEIA LEGISLATIVA
+PROJETO DE LEI Nº [NÚMERO]/[ANO]
+
+EMENTA: [inserir ementa do projeto]
+
+O [CARGO], [NOME], no exercício do mandato que lhe confere o eleitorado, apresenta o seguinte Projeto de Lei:
+
+Art. 1º — [Objeto principal da lei, de forma objetiva]
+Art. 2º — [Definições e conceitos, se necessário]
+Art. 3º — [Disposições específicas e regulamentação]
+Art. 4º — [Disposições complementares e responsabilidades]
+Art. 5º — As despesas decorrentes desta Lei correrão por conta das dotações orçamentárias próprias, suplementadas se necessário.
+Art. 6º — Esta Lei entra em vigor na data de sua publicação, revogadas as disposições em contrário.
+
+JUSTIFICATIVA
+
+[Texto de justificativa com argumentos jurídicos, sociais e políticos que fundamentam a necessidade da lei. Mínimo 3 parágrafos. Inclua referências ao interesse público, impacto esperado e alinhamento com políticas públicas existentes.]
+
+[CIDADE], [DATA].
+
+[NOME]
+[CARGO] | [PARTIDO]
+
+Adapte o número de artigos à complexidade do tema. Use linguagem jurídica precisa e formal. Mínimo 5 artigos.`;
+  }
+
   // Foto Avulsa (Instagram ou Facebook)
   if (plataforma === "facebook") {
     return "Crie um post para Facebook com até 400 palavras. Use parágrafos curtos (3-4 linhas), linguagem acessível ao público geral e uma chamada para ação no final.";
@@ -132,7 +162,9 @@ function buildPrompt(
   partidoCargo: string,
   respostas: string[],
   tomVoz: string,
-  textoReferencia: string
+  textoReferencia: string,
+  ementa?: string,
+  justificativa?: string
 ): string {
   const tomLabel = TOM_LABEL[tom] ?? tom;
   const formatoLabel = formato ? ` — ${formato}` : "";
@@ -146,6 +178,8 @@ function buildPrompt(
     : "";
 
   const contextLines: string[] = [];
+  if (ementa?.trim())        contextLines.push(`Ementa do Projeto de Lei: ${ementa.trim()}`);
+  if (justificativa?.trim()) contextLines.push(`Base para justificativa: ${justificativa.trim()}`);
   if (tomVoz?.trim()) {
     contextLines.push(`Tom de voz e estilo do político: ${tomVoz.trim()}`);
   }
@@ -170,6 +204,7 @@ Gere apenas o conteúdo final, pronto para uso. Não adicione explicações, tí
 }
 
 function getMaxTokens(plataforma: string, formato: string): number {
+  if (plataforma === "projeto-lei") return 2000;
   if (["Carrossel", "Sequência de Stories", "Discurso"].includes(formato) || plataforma === "discurso") {
     return 1500;
   }
@@ -192,6 +227,8 @@ export async function POST(req: Request) {
       respostas = [],
       tomVoz = "",
       textoReferencia = "",
+      ementa = "",
+      justificativa = "",
     } = body as {
       plataforma: string;
       formato?: string;
@@ -202,6 +239,8 @@ export async function POST(req: Request) {
       respostas?: string[];
       tomVoz?: string;
       textoReferencia?: string;
+      ementa?: string;
+      justificativa?: string;
     };
 
     if (!plataforma || !tema?.trim() || !tom) {
@@ -219,7 +258,7 @@ export async function POST(req: Request) {
       messages: [
         {
           role: "user",
-          content: buildPrompt(plataforma, formato, tema, tom, nomePolitico, partidoCargo, respostas, tomVoz, textoReferencia),
+          content: buildPrompt(plataforma, formato, tema, tom, nomePolitico, partidoCargo, respostas, tomVoz, textoReferencia, ementa, justificativa),
         },
       ],
     });

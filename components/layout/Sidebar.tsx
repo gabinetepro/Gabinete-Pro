@@ -17,7 +17,7 @@ import {
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/criar-conteudo", label: "Estúdio de Conteúdo", icon: PenSquare },
-  { href: "/kanban", label: "Central de Conteúdo", icon: Layout },
+  { href: "/kanban", label: "Cards de Conteúdo", icon: Layout },
   { href: "/agenda", label: "Agenda", icon: Calendar },
   { href: "/pautas", label: "Pautas", icon: FileText },
   { href: "/eleitores", label: "Eleitores", icon: Users },
@@ -33,7 +33,7 @@ export default function Sidebar() {
     <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-sidebar border-r border-border flex flex-col z-40">
       <div className="p-6 border-b border-border">
         <h1 className="text-xl font-extrabold bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent tracking-tight">
-          Gabinete Pro
+          🏛️ Gabinete Pro
         </h1>
         <p className="text-xs text-slate-500 mt-0.5">Gestão política inteligente</p>
       </div>

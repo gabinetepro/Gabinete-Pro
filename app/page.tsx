@@ -154,7 +154,7 @@ export default function LandingPage() {
                 icon: LayoutDashboard,
                 color: "from-emerald-500 to-emerald-300",
                 title: "Tudo em um só lugar",
-                desc: "Central de Conteúdo, eleitores, equipe, pautas centralizados. Menos ferramentas, mais foco no que importa.",
+                desc: "Cards de Conteúdo, eleitores, equipe e pautas centralizados. Menos ferramentas, mais foco no que importa.",
               },
             ].map(({ icon: Icon, color, title, desc }) => (
               <div
@@ -188,35 +188,59 @@ export default function LandingPage() {
             {[
               {
                 icon: Sparkles,
-                title: "Gerador de conteúdo com IA",
-                desc: "Posts, notas e comunicados gerados por IA treinada para política brasileira.",
+                title: "Estúdio de Conteúdo com IA",
+                desc: "Posts, discursos, releases e Projetos de Lei gerados por IA treinada para política brasileira.",
+                soon: false,
               },
               {
                 icon: Layout,
-                title: "Central de Conteúdo",
-                desc: "Organize o fluxo editorial da equipe com colunas de rascunho, revisão e publicado.",
+                title: "Cards de Conteúdo",
+                desc: "Organize o fluxo editorial com Kanban: rascunho, revisão, aprovado e publicado.",
+                soon: false,
               },
               {
                 icon: CalendarDays,
-                title: "Google Agenda integrado",
-                desc: "Sincronize eventos e receba sugestões de cobertura automáticas.",
+                title: "Agenda + Google Calendar",
+                desc: "Sincronize com o Google Agenda, gerencie eventos e receba alertas de cobertura.",
+                soon: false,
               },
               {
                 icon: FileText,
-                title: "Monitor de pautas",
-                desc: "Acompanhe projetos de lei, votações e pautas da câmara em tempo real.",
+                title: "Clipping e Monitor de Pautas",
+                desc: "Acompanhe notícias do seu município e pautas relevantes geradas pela IA.",
+                soon: false,
               },
               {
                 icon: Users,
-                title: "Cadastro de eleitores",
-                desc: "Base de eleitores com histórico de atendimentos, pedidos e follow-ups.",
+                title: "CRM de Eleitores",
+                desc: "Base de eleitores com segmentação, tags, histórico e exportação em CSV.",
+                soon: false,
               },
               {
                 icon: UserCog,
-                title: "Gestão de equipe",
-                desc: "Controle de acesso por nível, atribuição de tarefas e visão de produtividade.",
+                title: "Demandas Públicas",
+                desc: "Receba e responda mensagens de cidadãos via página pública com protocolo automático.",
+                soon: false,
               },
-            ].map(({ icon: Icon, title, desc }) => (
+              {
+                icon: LayoutDashboard,
+                title: "Gestão de Equipe",
+                desc: "Convide assessores com diferentes níveis de acesso e colabore em tempo real.",
+                soon: false,
+              },
+              {
+                icon: TrendingUp,
+                title: "Dashboard Analytics",
+                desc: "Visualize métricas de engajamento, eleitores cadastrados e produtividade da equipe.",
+                soon: true,
+              },
+              {
+                icon: Zap,
+                title: "WhatsApp Integrado",
+                desc: "Responda eleitores e envie comunicados diretamente pelo WhatsApp Business.",
+                soon: true,
+              },
+            ].map(({ icon: Icon, title, desc, soon }) => (
               <div
                 key={title}
                 className="flex gap-4 p-6 rounded-xl bg-surface border border-border hover:border-emerald-500/20 transition-all duration-200 group"
@@ -225,7 +249,12 @@ export default function LandingPage() {
                   <Icon size={18} className="text-emerald-400" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-100 mb-1">{title}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-semibold text-slate-100">{title}</h3>
+                    {soon && (
+                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/20 uppercase tracking-wide">em breve</span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-400 leading-relaxed">{desc}</p>
                 </div>
               </div>
@@ -444,7 +473,14 @@ export default function LandingPage() {
                 <span className="text-slate-400 text-sm">/mês</span>
               </div>
               <ul className="space-y-3 mb-8">
-                {["1 usuário", "Todas as funcionalidades", "Suporte por e-mail", "IA incluída"].map((f) => (
+                {[
+                  "1 usuário",
+                  "Estúdio de IA (posts, PL, discurso)",
+                  "Agenda + Google Calendar",
+                  "CRM de eleitores",
+                  "Demandas públicas",
+                  "Suporte por e-mail",
+                ].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
                     <Check size={14} className="text-emerald-400 shrink-0" />
                     {f}
@@ -477,7 +513,14 @@ export default function LandingPage() {
                   <span className="text-slate-400 text-sm">/mês</span>
                 </div>
                 <ul className="space-y-3 mb-8">
-                  {["Até 3 usuários", "Todas as funcionalidades", "Suporte prioritário", "IA incluída", "Relatórios avançados"].map((f) => (
+                  {[
+                    "Até 3 usuários",
+                    "Tudo do plano Solo",
+                    "Cards de Conteúdo (Kanban)",
+                    "Clipping + Monitor de pautas",
+                    "Gestão de equipe com papéis",
+                    "Suporte prioritário",
+                  ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
                       <Check size={14} className="text-emerald-400 shrink-0" />
                       {f}
@@ -502,7 +545,14 @@ export default function LandingPage() {
                 <span className="text-slate-400 text-sm">/mês</span>
               </div>
               <ul className="space-y-3 mb-8">
-                {["Até 8 usuários", "Todas as funcionalidades", "Suporte VIP", "IA incluída", "Relatórios avançados", "Onboarding dedicado"].map((f) => (
+                {[
+                  "Até 8 usuários",
+                  "Tudo do plano Assessor",
+                  "Importação em massa de eleitores",
+                  "Exportação CSV completa",
+                  "Página pública ilimitada",
+                  "Suporte VIP + onboarding dedicado",
+                ].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
                     <Check size={14} className="text-emerald-400 shrink-0" />
                     {f}

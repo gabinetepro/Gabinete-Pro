@@ -308,7 +308,7 @@ function EleitorFormModal({ open, onClose, editingEleitor, userId, onSaved }: Fo
 
   if (!open) return null;
 
-  const tabs = ["Dados pessoais", "Endereço", "Perfil político", "Tags & Obs."];
+  const tabs = ["Dados pessoais ✱", "Endereço", "Perfil político", "Tags & Obs."];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -353,6 +353,11 @@ function EleitorFormModal({ open, onClose, editingEleitor, userId, onSaved }: Fo
           {/* Tab 1 — Dados pessoais */}
           {activeTab === 1 && (
             <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2 -mt-1 mb-1">
+                <p className="text-xs text-slate-500 bg-slate-800/60 border border-slate-700/50 rounded-lg px-3 py-2">
+                  ✱ Apenas esta aba é obrigatória. As demais (Endereço, Perfil político, Tags) são opcionais — você pode salvar agora e completar depois.
+                </p>
+              </div>
               <div className="col-span-2">
                 <label className="label">Nome completo *</label>
                 <input className={inputCls} value={formData.nome} onChange={e => set("nome", e.target.value)} placeholder="Nome completo" />
@@ -562,23 +567,25 @@ function EleitorFormModal({ open, onClose, editingEleitor, userId, onSaved }: Fo
           <div className="flex gap-2">
             {activeTab > 1 && (
               <button onClick={() => setActiveTab(activeTab - 1)} className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 text-sm hover:bg-slate-800 transition-colors">
-                Anterior
-              </button>
-            )}
-            {activeTab < 4 && (
-              <button onClick={() => setActiveTab(activeTab + 1)} className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 text-sm hover:bg-slate-800 transition-colors">
-                Próxima
+                ← Anterior
               </button>
             )}
           </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-emerald-500 text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
-          >
-            {saving && <RefreshCw size={13} className="animate-spin" />}
-            {editingEleitor ? "Salvar alterações" : "Cadastrar eleitor"}
-          </button>
+          <div className="flex items-center gap-2">
+            {activeTab < 4 && (
+              <button onClick={() => setActiveTab(activeTab + 1)} className="px-4 py-2 rounded-lg border border-slate-700 text-slate-400 text-sm hover:bg-slate-800 transition-colors">
+                Próxima →
+              </button>
+            )}
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-emerald-500 text-white text-sm font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {saving && <RefreshCw size={13} className="animate-spin" />}
+              {editingEleitor ? "Salvar alterações" : "Cadastrar eleitor"}
+            </button>
+          </div>
         </div>
       </div>
     </div>

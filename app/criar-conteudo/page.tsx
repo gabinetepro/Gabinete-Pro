@@ -20,7 +20,7 @@ import { supabase } from "@/lib/supabase";
 
 // ── Types ──────────────────────────────────────────────────────────
 
-type Plataforma = "instagram" | "facebook" | "twitter" | "imprensa" | "discurso" | "oficio";
+type Plataforma = "instagram" | "facebook" | "twitter" | "imprensa" | "discurso" | "oficio" | "projeto-lei";
 type Tom = "formal" | "informal" | "emotivo" | "tecnico";
 type AiPhase = "idle" | "questions" | "done";
 
@@ -51,21 +51,23 @@ interface GeracaoResult {
 // ── Config ─────────────────────────────────────────────────────────
 
 const PLATAFORMA_OPTIONS: { value: Plataforma; label: string; emoji: string }[] = [
-  { value: "instagram", label: "Instagram",  emoji: "📸" },
-  { value: "facebook",  label: "Facebook",   emoji: "📘" },
-  { value: "twitter",   label: "Twitter/X",  emoji: "🐦" },
-  { value: "imprensa",  label: "Imprensa",   emoji: "📰" },
-  { value: "discurso",  label: "Discurso",   emoji: "🎤" },
-  { value: "oficio",    label: "Ofício",     emoji: "📄" },
+  { value: "instagram",   label: "Instagram",       emoji: "📸" },
+  { value: "facebook",    label: "Facebook",        emoji: "📘" },
+  { value: "twitter",     label: "Twitter/X",       emoji: "🐦" },
+  { value: "imprensa",    label: "Imprensa",        emoji: "📰" },
+  { value: "discurso",    label: "Discurso",        emoji: "🎤" },
+  { value: "oficio",      label: "Ofício",          emoji: "📄" },
+  { value: "projeto-lei", label: "Projeto de Lei",  emoji: "⚖️" },
 ];
 
 const FORMATO_MAP: Record<Plataforma, string[]> = {
-  instagram: ["Reels", "Sequência de Stories", "Carrossel", "Foto Avulsa"],
-  facebook:  ["Reels", "Carrossel", "Foto Avulsa"],
-  imprensa:  ["Nota de Imprensa", "Release"],
-  discurso:  [],
-  twitter:   [],
-  oficio:    [],
+  instagram:    ["Reels", "Sequência de Stories", "Carrossel", "Foto Avulsa"],
+  facebook:     ["Reels", "Carrossel", "Foto Avulsa"],
+  imprensa:     ["Nota de Imprensa", "Release"],
+  discurso:     [],
+  twitter:      [],
+  oficio:       [],
+  "projeto-lei": [],
 };
 
 const TOM_OPTIONS: { value: Tom; label: string; desc: string }[] = [
@@ -78,6 +80,13 @@ const TOM_OPTIONS: { value: Tom; label: string; desc: string }[] = [
 // ── AI Questions ───────────────────────────────────────────────────
 
 function getQuestions(plataforma: string, formato: string): string[] {
+  if (plataforma === "projeto-lei") {
+    return [
+      "Qual é o problema social ou jurídico que esta lei visa resolver?",
+      "Há dispositivos legais existentes que serão revogados ou modificados?",
+      "Qual o impacto financeiro estimado para o município (se houver)?",
+    ];
+  }
   if (plataforma === "discurso") {
     return [
       "Qual é a ocasião e o público presente?",
@@ -135,9 +144,10 @@ function getQuestions(plataforma: string, formato: string): string[] {
 // ── Helpers ────────────────────────────────────────────────────────
 
 function getDbTipo(plataforma: string, formato: string): string {
-  if (plataforma === "discurso") return "pronunciamento";
-  if (plataforma === "imprensa") return formato === "Release" ? "release" : "nota";
-  if (plataforma === "oficio")   return "nota";
+  if (plataforma === "discurso")    return "pronunciamento";
+  if (plataforma === "imprensa")    return formato === "Release" ? "release" : "nota";
+  if (plataforma === "oficio")      return "nota";
+  if (plataforma === "projeto-lei") return "projeto-lei";
   return "post";
 }
 
@@ -287,6 +297,8 @@ export default function CriarConteudoPage() {
 
   const [tomVoz,         setTomVoz]   = useState("");
   const [textoReferencia, setTextoRef] = useState("");
+  const [ementa,         setEmenta]   = useState("");
+  const [justificativa,  setJustif]   = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -406,6 +418,8 @@ export default function CriarConteudoPage() {
           respostas: aiAnswers.filter(Boolean),
           tomVoz,
           textoReferencia,
+          ementa,
+          justificativa,
         }),
       });
 
@@ -546,16 +560,51 @@ export default function CriarConteudoPage() {
               {/* Tema */}
               <div>
                 <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                  Tema / Assunto <span className="text-red-400">*</span>
+                  {form.plataforma === "projeto-lei" ? "Assunto / Tema da lei" : "Tema / Assunto"}{" "}
+                  <span className="text-red-400">*</span>
                 </label>
                 <textarea
                   value={form.tema}
                   onChange={(e) => updateForm("tema", e.target.value)}
-                  placeholder="Descreva o que o político quer comunicar. Ex: inauguração de creche no bairro Jardim das Flores..."
+                  placeholder={
+                    form.plataforma === "projeto-lei"
+                      ? "Ex: Proibição de queima de fogos em áreas urbanas, proteção de animais domésticos..."
+                      : "Descreva o que o político quer comunicar. Ex: inauguração de creche no bairro Jardim das Flores..."
+                  }
                   rows={3}
                   className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
                 />
               </div>
+
+              {/* PL-specific fields */}
+              {form.plataforma === "projeto-lei" && (
+                <>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                      Ementa <span className="text-slate-600">(opcional)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={ementa}
+                      onChange={(e) => setEmenta(e.target.value)}
+                      placeholder="Ex: Dispõe sobre a proibição de queima de fogos de artifício com estampido no município..."
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                      Base para justificativa <span className="text-slate-600">(opcional)</span>
+                    </label>
+                    <textarea
+                      value={justificativa}
+                      onChange={(e) => setJustif(e.target.value)}
+                      placeholder="Descreva os principais argumentos para justificar esta lei. Ex: dados sobre incidência, legislações similares em outros municípios, demanda da população..."
+                      rows={3}
+                      className="w-full bg-background border border-border rounded-lg px-3 py-2.5 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-blue-500 transition-colors resize-none"
+                    />
+                  </div>
+                </>
+              )}
 
               {/* Tom */}
               <div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   DragDropContext, Droppable, Draggable, DropResult,
 } from "@hello-pangea/dnd";
@@ -8,7 +8,7 @@ import Link from "next/link";
 import {
   Plus, Search, ChevronRight, ChevronLeft, Trash2, Copy, Check,
   LayoutGrid, List, MoreVertical, Calendar, Paperclip,
-  RefreshCw, X, ArrowRight, Eye, Clock,
+  RefreshCw, X, ArrowRight, Eye, Clock, CheckSquare, Square, FileUp,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,11 +20,15 @@ type KanbanStatus = "rascunho" | "revisao" | "aprovado" | "publicado";
 type SortKey = "titulo" | "status" | "created_at" | "data_veiculacao";
 type SortDir = "asc" | "desc";
 
-interface HistoricoItem {
-  acao: string;
-  usuario: string;
-  data: string;
+interface ChecklistItem {
+  id: string;
+  text: string;
+  done: boolean;
 }
+
+type HistoricoItem =
+  | { type?: undefined; acao: string; usuario: string; data: string }
+  | { type: "meta"; checklist: ChecklistItem[]; notes: string; pendencias: string[] };
 
 interface Conteudo {
   id: string;
@@ -89,16 +93,18 @@ const TIPO: Record<string, { label: string; bg: string; text: string }> = {
   oficio:         { label: "Ofício",     bg: "bg-slate-500/15",  text: "text-slate-300"  },
   nota:           { label: "Nota",       bg: "bg-slate-500/15",  text: "text-slate-300"  },
   post:           { label: "Post",       bg: "bg-blue-500/15",   text: "text-blue-300"   },
+  "projeto-lei":  { label: "Projeto de Lei", bg: "bg-amber-500/15", text: "text-amber-300" },
 };
 
 const TIPO_FILTERS = [
-  { value: "",           label: "Todos"     },
-  { value: "instagram",  label: "Instagram" },
-  { value: "facebook",   label: "Facebook"  },
-  { value: "twitter",    label: "Twitter/X" },
-  { value: "release",    label: "Release"   },
-  { value: "discurso",   label: "Discurso"  },
-  { value: "oficio",     label: "Ofício"    },
+  { value: "",             label: "Todos"          },
+  { value: "instagram",    label: "Instagram"      },
+  { value: "facebook",     label: "Facebook"       },
+  { value: "twitter",      label: "Twitter/X"      },
+  { value: "release",      label: "Release"        },
+  { value: "discurso",     label: "Discurso"       },
+  { value: "oficio",       label: "Ofício"         },
+  { value: "projeto-lei",  label: "Projeto de Lei" },
 ];
 
 const AVATAR_COLORS = [
@@ -144,6 +150,12 @@ function initials(name: string) {
   return name.trim().split(" ").filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join("");
 }
 
+function getMeta(historico: HistoricoItem[] | null) {
+  return (historico ?? []).find(
+    (h): h is Extract<HistoricoItem, { type: "meta" }> => h.type === "meta"
+  ) ?? null;
+}
+
 // ── Avatar ─────────────────────────────────────────────────────────────────
 
 function Avatar({ name }: { name: string }) {
@@ -166,13 +178,20 @@ interface CardModalProps {
 }
 
 function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardModalProps) {
-  const [titulo,    setTitulo]    = useState("");
-  const [conteudo,  setConteudo]  = useState("");
-  const [dataVeic,  setDataVeic]  = useState("");
-  const [anexo,     setAnexo]     = useState("");
-  const [saving,    setSaving]    = useState(false);
-  const [copied,    setCopied]    = useState(false);
-  const [confirmDel, setConfirmDel] = useState(false);
+  const [titulo,       setTitulo]       = useState("");
+  const [conteudo,     setConteudo]     = useState("");
+  const [dataVeic,     setDataVeic]     = useState("");
+  const [anexo,        setAnexo]        = useState("");
+  const [checklist,    setChecklist]    = useState<ChecklistItem[]>([]);
+  const [checkInput,   setCheckInput]   = useState("");
+  const [notes,        setNotes]        = useState("");
+  const [pendencias,   setPendencias]   = useState<string[]>([]);
+  const [pendInput,    setPendInput]    = useState("");
+  const [saving,       setSaving]       = useState(false);
+  const [uploading,    setUploading]    = useState(false);
+  const [copied,       setCopied]       = useState(false);
+  const [confirmDel,   setConfirmDel]   = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!card) return;
@@ -180,6 +199,12 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
     setConteudo(card.conteudo ?? "");
     setDataVeic(card.data_veiculacao ?? "");
     setAnexo(card.anexo_url ?? "");
+    const meta = getMeta(card.historico);
+    setChecklist(meta?.checklist ?? []);
+    setNotes(meta?.notes ?? "");
+    setPendencias(meta?.pendencias ?? []);
+    setCheckInput("");
+    setPendInput("");
     setSaving(false);
     setCopied(false);
     setConfirmDel(false);
@@ -197,14 +222,25 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
   const colCfg  = COL[card.status];
   const curIdx  = STATUSES.indexOf(card.status);
   const nextSt  = curIdx < STATUSES.length - 1 ? STATUSES[curIdx + 1] : null;
+
+  const cardMeta = getMeta(card.historico);
   const hasChanges = titulo !== card.titulo
     || conteudo !== (card.conteudo ?? "")
     || dataVeic !== (card.data_veiculacao ?? "")
-    || anexo    !== (card.anexo_url ?? "");
+    || anexo    !== (card.anexo_url ?? "")
+    || notes    !== (cardMeta?.notes ?? "")
+    || JSON.stringify(checklist)  !== JSON.stringify(cardMeta?.checklist ?? [])
+    || JSON.stringify(pendencias) !== JSON.stringify(cardMeta?.pendencias ?? []);
 
   async function save() {
     if (!card) return;
     setSaving(true);
+    const logItems = (card.historico ?? []).filter(
+      (h): h is Extract<HistoricoItem, { type?: undefined }> => h.type !== "meta"
+    );
+    const metaItem: HistoricoItem = { type: "meta", checklist, notes, pendencias };
+    const newHistorico: HistoricoItem[] = [...logItems, metaItem];
+
     const { data, error } = await supabase
       .from("conteudos")
       .update({
@@ -212,6 +248,7 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
         conteudo,
         data_veiculacao: dataVeic || null,
         anexo_url:       anexo.trim() || null,
+        historico:       newHistorico,
       })
       .eq("id", card.id)
       .select()
@@ -226,7 +263,50 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const historico = card.historico ?? [];
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !card) return;
+    setUploading(true);
+    const ext  = file.name.split(".").pop() ?? "bin";
+    const path = `conteudos/${card.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("gabinete-media").upload(path, file, { upsert: true });
+    if (!error) {
+      const { data: { publicUrl } } = supabase.storage.from("gabinete-media").getPublicUrl(path);
+      setAnexo(publicUrl);
+    }
+    setUploading(false);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
+  function addCheckItem() {
+    const t = checkInput.trim();
+    if (!t) return;
+    setChecklist(prev => [...prev, { id: crypto.randomUUID(), text: t, done: false }]);
+    setCheckInput("");
+  }
+
+  function toggleCheck(id: string) {
+    setChecklist(prev => prev.map(c => c.id === id ? { ...c, done: !c.done } : c));
+  }
+
+  function removeCheck(id: string) {
+    setChecklist(prev => prev.filter(c => c.id !== id));
+  }
+
+  function addPendencia() {
+    const t = pendInput.trim();
+    if (!t) return;
+    setPendencias(prev => [...prev, t]);
+    setPendInput("");
+  }
+
+  function removePendencia(idx: number) {
+    setPendencias(prev => prev.filter((_, i) => i !== idx));
+  }
+
+  const historico = (card.historico ?? []).filter(h => h.type !== "meta") as Extract<HistoricoItem, { type?: undefined }>[];
+  const checkDone  = checklist.filter(c => c.done).length;
+  const checkTotal = checklist.length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -248,6 +328,11 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${colCfg.countBg} ${colCfg.countText}`}>
                 {colCfg.label}
               </span>
+              {checkTotal > 0 && (
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${checkDone === checkTotal ? "bg-emerald-500/15 text-emerald-300" : "bg-slate-700/60 text-slate-400"}`}>
+                  ✓ {checkDone}/{checkTotal}
+                </span>
+              )}
             </div>
           </div>
           <button
@@ -259,7 +344,7 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
         </div>
 
         {/* Body */}
-        <div className="overflow-y-auto flex-1 p-5 space-y-4">
+        <div className="overflow-y-auto flex-1 p-5 space-y-5">
           {/* Content */}
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -268,13 +353,120 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
             </div>
             <textarea
               className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 leading-relaxed focus:outline-none focus:border-blue-500 resize-none transition-colors"
-              rows={8}
+              rows={7}
               value={conteudo}
               onChange={(e) => setConteudo(e.target.value)}
             />
           </div>
 
-          {/* Date + Attachment */}
+          {/* Checklist */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                <CheckSquare size={11} className="inline mr-1" />Checklist
+                {checkTotal > 0 && (
+                  <span className="ml-2 text-slate-600 normal-case font-normal">
+                    {checkDone}/{checkTotal} concluído{checkDone !== 1 ? "s" : ""}
+                  </span>
+                )}
+              </label>
+            </div>
+            {checkTotal > 0 && (
+              <div className="h-1 bg-slate-700 rounded-full mb-3 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.round((checkDone / checkTotal) * 100)}%` }}
+                />
+              </div>
+            )}
+            <div className="space-y-1.5 mb-2">
+              {checklist.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 group">
+                  <button onClick={() => toggleCheck(item.id)} className="flex-shrink-0">
+                    {item.done
+                      ? <CheckSquare size={16} className="text-emerald-400" />
+                      : <Square size={16} className="text-slate-500" />}
+                  </button>
+                  <span className={`flex-1 text-sm ${item.done ? "line-through text-slate-600" : "text-slate-300"}`}>
+                    {item.text}
+                  </span>
+                  <button
+                    onClick={() => removeCheck(item.id)}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-700 text-slate-500 hover:text-red-400 transition-all"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                value={checkInput}
+                onChange={(e) => setCheckInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCheckItem(); } }}
+                placeholder="Adicionar item…"
+              />
+              <button
+                onClick={addCheckItem}
+                className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium transition-colors"
+              >
+                <Plus size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Notas */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Notas internas
+            </label>
+            <textarea
+              className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-sm text-slate-200 leading-relaxed focus:outline-none focus:border-blue-500 resize-none transition-colors"
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Observações, contexto, instruções para a equipe…"
+            />
+          </div>
+
+          {/* Pendências */}
+          <div>
+            <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Pendências
+            </label>
+            <div className="space-y-1.5 mb-2">
+              {pendencias.map((p, i) => (
+                <div key={i} className="flex items-center gap-2 group">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                  <span className="flex-1 text-sm text-slate-300">{p}</span>
+                  <button
+                    onClick={() => removePendencia(i)}
+                    className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-slate-700 text-slate-500 hover:text-red-400 transition-all"
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500"
+                value={pendInput}
+                onChange={(e) => setPendInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addPendencia(); } }}
+                placeholder="Adicionar pendência…"
+              />
+              <button
+                onClick={addPendencia}
+                className="px-3 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium transition-colors"
+              >
+                <Plus size={13} />
+              </button>
+            </div>
+          </div>
+
+          {/* Date + File upload */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
@@ -289,14 +481,40 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
             </div>
             <div>
               <label className="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                <Paperclip size={11} className="inline mr-1" />Anexo (URL)
+                <Paperclip size={11} className="inline mr-1" />Anexo
               </label>
+              {anexo ? (
+                <div className="flex items-center gap-2">
+                  <a
+                    href={anexo}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 truncate text-xs text-blue-400 hover:text-blue-300 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2"
+                  >
+                    {anexo.split("/").pop()}
+                  </a>
+                  <button
+                    onClick={() => setAnexo("")}
+                    className="p-2 rounded-lg hover:bg-slate-700 text-slate-500 hover:text-red-400 transition-colors flex-shrink-0"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-600 text-slate-400 text-xs hover:border-blue-500/50 hover:text-blue-400 disabled:opacity-50 transition-colors"
+                >
+                  {uploading ? <RefreshCw size={13} className="animate-spin" /> : <FileUp size={13} />}
+                  {uploading ? "Enviando…" : "Fazer upload"}
+                </button>
+              )}
               <input
-                type="url"
-                className="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-                placeholder="https://…"
-                value={anexo}
-                onChange={(e) => setAnexo(e.target.value)}
+                ref={fileRef}
+                type="file"
+                className="hidden"
+                onChange={handleFileUpload}
               />
             </div>
           </div>
@@ -337,7 +555,6 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
 
         {/* Footer */}
         <div className="flex items-center gap-2 p-5 border-t border-slate-700 flex-wrap">
-          {/* Delete */}
           {confirmDel ? (
             <>
               <button
@@ -363,7 +580,6 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
           )}
 
           <div className="flex items-center gap-2 ml-auto flex-wrap">
-            {/* Copy */}
             <button
               onClick={handleCopy}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 text-slate-400 text-xs font-medium hover:bg-slate-800 hover:text-white transition-colors"
@@ -372,7 +588,6 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
               {copied ? "Copiado!" : "Copiar"}
             </button>
 
-            {/* Move to next */}
             {nextSt && (
               <button
                 onClick={() => { onMove(card.id, nextSt); onClose(); }}
@@ -383,7 +598,6 @@ function CardModal({ card, onClose, onSaved, onDelete, onMove, userName }: CardM
               </button>
             )}
 
-            {/* Save */}
             {hasChanges && (
               <button
                 onClick={save}
@@ -415,8 +629,11 @@ interface KanbanCardProps {
 function KanbanCardComp({ card, isDragging, onOpen, onMove, onDelete, curIdx }: KanbanCardProps) {
   const [menuOpen,   setMenuOpen]   = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
-  const tipoCfg   = getTipo(card.canal, card.tipo);
+  const tipoCfg = getTipo(card.canal, card.tipo);
   const charCount = card.conteudo?.length ?? 0;
+  const meta       = getMeta(card.historico);
+  const checkTotal = meta?.checklist?.length ?? 0;
+  const checkDone  = meta?.checklist?.filter(c => c.done).length ?? 0;
 
   return (
     <div
@@ -436,9 +653,22 @@ function KanbanCardComp({ card, isDragging, onOpen, onMove, onDelete, curIdx }: 
       </div>
 
       {/* Title */}
-      <p className="text-sm font-medium text-slate-200 leading-snug line-clamp-2 mb-3">
+      <p className="text-sm font-medium text-slate-200 leading-snug line-clamp-2 mb-2.5">
         {card.titulo}
       </p>
+
+      {/* Checklist progress bar */}
+      {checkTotal > 0 && (
+        <div className="mb-2.5">
+          <div className="h-1 bg-slate-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all"
+              style={{ width: `${Math.round((checkDone / checkTotal) * 100)}%` }}
+            />
+          </div>
+          <p className="text-[10px] text-slate-600 mt-0.5">{checkDone}/{checkTotal} itens</p>
+        </div>
+      )}
 
       {/* Footer row */}
       <div
@@ -584,6 +814,9 @@ function ListView({ cards, onOpen, onMove, onDelete }: ListViewProps) {
             const tipoCfg = getTipo(card.canal, card.tipo);
             const colCfg  = COL[card.status];
             const idx     = STATUSES.indexOf(card.status);
+            const meta    = getMeta(card.historico);
+            const cTotal  = meta?.checklist?.length ?? 0;
+            const cDone   = meta?.checklist?.filter(c => c.done).length ?? 0;
             return (
               <tr key={card.id} className="hover:bg-slate-800/30 transition-colors">
                 <td className="px-4 py-3 max-w-xs">
@@ -595,6 +828,9 @@ function ListView({ cards, onOpen, onMove, onDelete }: ListViewProps) {
                   </p>
                   {card.criado_por && (
                     <p className="text-xs text-slate-600 mt-0.5">{card.criado_por}</p>
+                  )}
+                  {cTotal > 0 && (
+                    <p className="text-xs text-slate-600 mt-0.5">✓ {cDone}/{cTotal}</p>
                   )}
                 </td>
                 <td className="px-4 py-3">
@@ -762,7 +998,7 @@ export default function KanbanPage() {
 
   return (
     <AppShell
-      title="Central de Conteúdo"
+      title="Cards de Conteúdo"
       subtitle="Gerencie seus textos por etapa de publicação"
       headerRight={
         <Link
@@ -813,7 +1049,7 @@ export default function KanbanPage() {
               viewMode === "kanban" ? "bg-blue-600 text-white" : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            <LayoutGrid size={13} /> Kanban
+            <LayoutGrid size={13} /> Quadro
           </button>
           <button
             onClick={() => setViewMode("lista")}

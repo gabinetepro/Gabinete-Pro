@@ -26,7 +26,7 @@ export default function DarkModeToggle() {
       className="p-2 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
       aria-label="Alternar modo escuro"
     >
-      {isDark ? <Sun size={18} /> : <Moon size={18} />}
+      {isDark ? <Moon size={18} /> : <Sun size={18} />}
     </button>
   );
 }
