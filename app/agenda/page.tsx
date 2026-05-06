@@ -19,6 +19,8 @@ import {
   Link2Off,
   Check,
   AlertCircle,
+  Sparkles,
+  Copy,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import Button from "@/components/ui/Button";
@@ -157,6 +159,7 @@ interface EventDetailProps {
   onDelete: () => void;
   onDeleteConfirm: () => void;
   onDeleteCancel: () => void;
+  onSugerir: () => void;
 }
 
 function EventDetail({
@@ -167,6 +170,7 @@ function EventDetail({
   onDelete,
   onDeleteConfirm,
   onDeleteCancel,
+  onSugerir,
 }: EventDetailProps) {
   const cfg = TIPO_CFG[evento.tipo];
   const d   = parseDate(evento.data);
@@ -233,31 +237,42 @@ function EventDetail({
         )}
       </div>
 
-      <div className="flex items-center gap-2 pt-4 border-t border-border">
-        {deleteConfirm ? (
-          <>
-            <span className="text-xs text-red-400 mr-auto">Confirmar exclusão?</span>
-            <Button variant="secondary" size="sm" onClick={onDeleteCancel}>Cancelar</Button>
-            <Button size="sm" onClick={onDelete} className="bg-red-600 hover:bg-red-700 border-red-600">Excluir</Button>
-          </>
-        ) : (
-          <>
-            <button
-              onClick={onDeleteConfirm}
-              className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-              title="Excluir evento"
-            >
-              <Trash2 size={15} />
-            </button>
-            <div className="ml-auto flex gap-2">
-              <Button variant="secondary" size="sm" onClick={onClose}>Fechar</Button>
-              <Button size="sm" onClick={onEdit}>
-                <Pencil size={13} />
-                Editar
-              </Button>
-            </div>
-          </>
+      <div className="pt-4 border-t border-border">
+        {!deleteConfirm && (
+          <button
+            onClick={() => { onClose(); onSugerir(); }}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 mb-3 rounded-xl bg-gradient-to-r from-blue-600/20 to-emerald-500/20 border border-blue-500/30 text-blue-300 text-sm font-semibold hover:from-blue-600/30 hover:to-emerald-500/30 transition-all"
+          >
+            <Sparkles size={14} />
+            Sugerir conteúdo com IA
+          </button>
         )}
+        <div className="flex items-center gap-2">
+          {deleteConfirm ? (
+            <>
+              <span className="text-xs text-red-400 mr-auto">Confirmar exclusão?</span>
+              <Button variant="secondary" size="sm" onClick={onDeleteCancel}>Cancelar</Button>
+              <Button size="sm" onClick={onDelete} className="bg-red-600 hover:bg-red-700 border-red-600">Excluir</Button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={onDeleteConfirm}
+                className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                title="Excluir evento"
+              >
+                <Trash2 size={15} />
+              </button>
+              <div className="ml-auto flex gap-2">
+                <Button variant="secondary" size="sm" onClick={onClose}>Fechar</Button>
+                <Button size="sm" onClick={onEdit}>
+                  <Pencil size={13} />
+                  Editar
+                </Button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -366,6 +381,57 @@ function GoogleCard({
   );
 }
 
+// ── AiSuggestionCard ───────────────────────────────────────────────
+
+function AiSuggestionCard({
+  icon, label, content, eventoTitulo, eventoData, eventoLocal,
+}: {
+  icon: string;
+  label: string;
+  content: string;
+  eventoTitulo: string;
+  eventoData: string;
+  eventoLocal: string | null;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  const studioUrl = `/criar-conteudo?evento=${encodeURIComponent(eventoTitulo)}&data=${encodeURIComponent(eventoData)}&local=${encodeURIComponent(eventoLocal ?? "")}`;
+
+  return (
+    <div className="bg-background border border-border rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-slate-800/40">
+        <span>{icon}</span>
+        <span className="text-xs font-semibold text-slate-300">{label}</span>
+      </div>
+      <div className="p-4">
+        <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">{content}</p>
+      </div>
+      <div className="flex items-center gap-2 px-4 pb-3">
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-slate-400 hover:text-slate-200 hover:border-blue-500/40 transition-colors"
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+        <a
+          href={studioUrl}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:opacity-90 transition-opacity"
+        >
+          <Sparkles size={12} />
+          Abrir no Estúdio
+        </a>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ───────────────────────────────────────────────────────────
 
 export default function AgendaPage() {
@@ -385,6 +451,12 @@ export default function AgendaPage() {
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [eventos,       setEventos]       = useState<Evento[]>([]);
   const [loading,       setLoading]       = useState(true);
+
+  // AI suggestion state
+  const [aiEvento,   setAiEvento]   = useState<Evento | null>(null);
+  const [aiLoading,  setAiLoading]  = useState(false);
+  const [aiContent,  setAiContent]  = useState<{ post: string; oficio: string; roteiro: string } | null>(null);
+  const [aiError,    setAiError]    = useState<string | null>(null);
 
   // Google integration state
   const [googleConnected,  setGoogleConnected]  = useState(false);
@@ -587,6 +659,33 @@ export default function AgendaPage() {
     setSelectedEvent(null);
     setDeleteConfirm(false);
     loadEventos();
+  }
+
+  // ── AI suggestion handler ─────────────────────────────────
+
+  async function handleSugerir(evento: Evento) {
+    setAiEvento(evento);
+    setAiContent(null);
+    setAiError(null);
+    setAiLoading(true);
+    try {
+      const res = await fetch("/api/agenda/sugerir", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: evento.titulo,
+          data: evento.data,
+          local: evento.local,
+          descricao: evento.descricao,
+        }),
+      });
+      const json = await res.json() as { post?: string; oficio?: string; roteiro?: string; error?: string };
+      if (!res.ok) { setAiError(json.error ?? "Erro ao gerar sugestões."); }
+      else { setAiContent({ post: json.post ?? "", oficio: json.oficio ?? "", roteiro: json.roteiro ?? "" }); }
+    } catch {
+      setAiError("Erro de conexão. Tente novamente.");
+    }
+    setAiLoading(false);
   }
 
   // ── Google handlers ───────────────────────────────────────
@@ -1147,7 +1246,70 @@ export default function AgendaPage() {
             onDelete={() => handleDelete(selectedEvent.id)}
             onDeleteConfirm={() => setDeleteConfirm(true)}
             onDeleteCancel={() => setDeleteConfirm(false)}
+            onSugerir={() => handleSugerir(selectedEvent)}
           />
+        )}
+      </Modal>
+
+      {/* AI Suggestion Modal */}
+      <Modal
+        open={!!aiEvento}
+        onClose={() => { setAiEvento(null); setAiContent(null); setAiError(null); }}
+        title="Sugestões de Conteúdo IA"
+        size="lg"
+      >
+        {aiEvento && (
+          <div className="space-y-4">
+            <p className="text-xs text-slate-400">
+              Com base no evento <span className="text-slate-200 font-semibold">{aiEvento.titulo}</span> em{" "}
+              {parseDate(aiEvento.data).toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
+            </p>
+
+            {aiLoading && (
+              <div className="flex flex-col items-center justify-center py-12 gap-3">
+                <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
+                <p className="text-sm text-slate-400">Gerando sugestões com IA...</p>
+              </div>
+            )}
+
+            {aiError && (
+              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400">
+                {aiError}
+              </div>
+            )}
+
+            {aiContent && !aiLoading && (
+              <div className="space-y-4">
+                {/* Post Instagram */}
+                <AiSuggestionCard
+                  icon="📱"
+                  label="Post para Instagram"
+                  content={aiContent.post}
+                  eventoTitulo={aiEvento.titulo}
+                  eventoData={aiEvento.data}
+                  eventoLocal={aiEvento.local}
+                />
+                {/* Ofício */}
+                <AiSuggestionCard
+                  icon="📄"
+                  label="Ofício sugerido"
+                  content={aiContent.oficio}
+                  eventoTitulo={aiEvento.titulo}
+                  eventoData={aiEvento.data}
+                  eventoLocal={aiEvento.local}
+                />
+                {/* Roteiro */}
+                <AiSuggestionCard
+                  icon="🎤"
+                  label="Roteiro de fala"
+                  content={aiContent.roteiro}
+                  eventoTitulo={aiEvento.titulo}
+                  eventoData={aiEvento.data}
+                  eventoLocal={aiEvento.local}
+                />
+              </div>
+            )}
+          </div>
         )}
       </Modal>
     </AppShell>

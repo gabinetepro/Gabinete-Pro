@@ -18,6 +18,7 @@ import {
   RefreshCw,
   BarChart3,
   UserPlus,
+  Sparkles,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import EleitoresChart from "@/components/dashboard/EleitoresChart";
@@ -46,6 +47,14 @@ interface Conteudo {
 interface ChartPoint {
   mes: string;
   total: number;
+}
+interface EventoHoje {
+  id: string;
+  titulo: string;
+  tipo: string;
+  hora_inicio: string | null;
+  hora_fim: string | null;
+  local: string | null;
 }
 interface DashboardData {
   metrics: {
@@ -350,6 +359,8 @@ export default function DashboardPage() {
   const [activeTab, setActiveTab] = useState<"eleitores" | "conteudos">(
     "eleitores"
   );
+  const [eventosHoje, setEventosHoje] = useState<EventoHoje[]>([]);
+  const [eventosLoading, setEventosLoading] = useState(true);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -369,6 +380,21 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!authLoading && user) loadData();
   }, [authLoading, user, loadData]);
+
+  useEffect(() => {
+    if (!user) return;
+    const today = new Date().toISOString().split("T")[0];
+    supabase
+      .from("eventos")
+      .select("id, titulo, tipo, hora_inicio, hora_fim, local")
+      .eq("user_id", user.id)
+      .eq("data", today)
+      .order("hora_inicio", { ascending: true, nullsFirst: false })
+      .then(({ data }) => {
+        setEventosHoje((data as EventoHoje[]) ?? []);
+        setEventosLoading(false);
+      });
+  }, [user]);
 
   async function handleSignOut() {
     await signOut();
@@ -461,6 +487,76 @@ export default function DashboardPage() {
             valueColor="text-purple-400"
             loading={loading}
           />
+        </div>
+
+        {/* ── Agenda de hoje ── */}
+        <div className="bg-surface border border-border rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+            <div>
+              <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">Agenda de hoje</h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {new Date().toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}
+              </p>
+            </div>
+            <Link href="/agenda" className="text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium">
+              Ver agenda →
+            </Link>
+          </div>
+
+          {eventosLoading ? (
+            <div className="p-4 space-y-3">
+              {[1, 2].map(i => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skel className="w-10 h-10 rounded-lg shrink-0" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skel className="h-3 w-2/3" />
+                    <Skel className="h-2.5 w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : eventosHoje.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-8 gap-2">
+              <Calendar size={22} className="text-slate-700" />
+              <p className="text-sm text-slate-500">Nenhum evento hoje.</p>
+              <Link href="/agenda" className="text-xs font-semibold text-blue-400 hover:text-blue-300">
+                Adicionar na agenda →
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {eventosHoje.map((ev) => {
+                const hora = ev.hora_inicio ? ev.hora_inicio.slice(0, 5) : null;
+                const params = new URLSearchParams({
+                  evento: ev.titulo,
+                  data: new Date().toISOString().split("T")[0],
+                  ...(ev.local ? { local: ev.local } : {}),
+                });
+                return (
+                  <div key={ev.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-700/20 transition-colors">
+                    <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col items-center justify-center shrink-0">
+                      <Calendar size={14} className="text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-200 truncate">{ev.titulo}</p>
+                      <p className="text-xs text-slate-500">
+                        {hora && <span className="font-medium text-slate-400">{hora}</span>}
+                        {hora && ev.local && " · "}
+                        {ev.local}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/criar-conteudo?${params.toString()}`}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600/20 to-emerald-500/20 border border-blue-500/30 text-blue-300 hover:from-blue-600/30 hover:to-emerald-500/30 transition-all whitespace-nowrap shrink-0"
+                    >
+                      <Sparkles size={11} />
+                      Sugerir conteúdo
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── Linha principal ── */}

@@ -215,12 +215,34 @@ export default function PublicDemandasPage() {
 
   if (notFound || !profile) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center gap-4 p-8 text-center">
-        <AlertCircle size={48} className="text-slate-300" />
-        <h1 className="text-xl font-bold text-slate-700">Página não encontrada</h1>
-        <p className="text-slate-500 max-w-xs text-sm">
-          Esta página não existe ou o link pode estar incorreto.
-        </p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex flex-col items-center justify-center p-6">
+        <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+          {/* Card header gradient */}
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8 text-center">
+            <div className="text-5xl mb-3">🏛️</div>
+            <h1 className="text-xl font-black text-white leading-tight">
+              Perfil não encontrado
+            </h1>
+          </div>
+          {/* Card body */}
+          <div className="px-6 py-6 text-center space-y-4">
+            <p className="text-slate-500 text-sm leading-relaxed">
+              O link pode estar incorreto ou o perfil ainda não foi configurado.
+            </p>
+            <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4 text-left">
+              <p className="text-xs text-blue-700 leading-relaxed">
+                <strong>Se você é o político:</strong> acesse as configurações do Gabinete Pro para ativar sua página pública.
+              </p>
+            </div>
+          </div>
+          {/* Footer */}
+          <div className="px-6 pb-6 text-center">
+            <p className="text-xs text-slate-400">
+              Canal oficial de atendimento ao cidadão ·{" "}
+              <span className="text-blue-500 font-semibold">Gabinete Pro</span>
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

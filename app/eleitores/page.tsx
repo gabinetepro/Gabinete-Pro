@@ -45,7 +45,7 @@ interface Eleitor {
   preferencia_contato: string | null;
   observacoes: string | null;
   tags: string[] | null;
-  status: string;
+  status?: string;
   created_at: string;
 }
 
@@ -208,7 +208,6 @@ function buildPayload(f: FormData, userId: string) {
     preferencia_contato:  f.preferencia_contato || null,
     observacoes:           f.observacoes || null,
     tags:                 f.tags,
-    status:               "ativo",
   };
 }
 
@@ -713,7 +712,6 @@ function ImportModal({ open, onClose, userId, onImported }: ImportModalProps) {
         uf:         getCol("uf", row)?.toUpperCase().slice(0, 2) || null,
         engajamento:getCol("engajamento", row) || null,
         observacoes: getCol("observacoes", row) || null,
-        status:     "ativo",
         tags:       [] as string[],
         temas_interesse: [] as string[],
         aceita_comunicados: false,
