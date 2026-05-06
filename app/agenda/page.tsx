@@ -394,6 +394,7 @@ export default function AgendaPage() {
   const [needsReconnect,   setNeedsReconnect]   = useState(false);
   const [addToGoogle,      setAddToGoogle]      = useState(false);
   const [googleNotice,     setGoogleNotice]     = useState<string | null>(null);
+  const [autoSync,         setAutoSync]         = useState(false);
 
   // ── Check URL params after OAuth redirect ──────────────────
 
@@ -401,6 +402,7 @@ export default function AgendaPage() {
     const params = new URLSearchParams(window.location.search);
     if (params.get("google") === "connected") {
       setGoogleConnected(true);
+      setAutoSync(true);
       setGoogleNotice("Google Agenda conectado com sucesso!");
       window.history.replaceState({}, "", "/agenda");
       setTimeout(() => setGoogleNotice(null), 4000);
@@ -607,6 +609,15 @@ export default function AgendaPage() {
     }
     setSyncing(false);
   }
+
+  // Auto-sync after OAuth redirect
+  useEffect(() => {
+    if (autoSync) {
+      setAutoSync(false);
+      handleSync();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSync]);
 
   async function handleDisconnect() {
     if (!user) return;

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Sparkles, CalendarDays, Layout, Users, UserCog,
-  Check, ArrowRight, Zap, Star, X,
+  Check, ArrowRight, Star, X,
   Newspaper, Bot, Cpu,
 } from "lucide-react";
 import AppMockup from "@/components/landing/AppMockup";
@@ -156,7 +156,6 @@ export default function LandingPage() {
 
             <div className="text-center lg:text-left">
               <div className="inline-flex items-center gap-2 px-3 py-1.5 mb-8 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-300 text-xs font-semibold">
-                <Zap size={11} />
                 ⚡ Inteligência Artificial para mandatos políticos
               </div>
 
@@ -193,7 +192,7 @@ export default function LandingPage() {
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5 justify-center lg:justify-start text-xs text-slate-500">
-                {["7 dias grátis", "Sem cartão de crédito", "Cancele quando quiser"].map((t) => (
+                {["7 dias grátis", "Sem cartão", "Cancele quando quiser"].map((t) => (
                   <span key={t} className="flex items-center gap-1.5">
                     <Check size={12} className="text-emerald-400" />
                     {t}
@@ -321,10 +320,11 @@ export default function LandingPage() {
               </p>
               <ul className="space-y-3">
                 {[
-                  "Projetos de Lei com embasamento técnico e artigos formatados",
+                  "Projetos de Lei com embasamento técnico",
                   "Ofícios e requerimentos prontos para assinar",
-                  "Posts otimizados para Instagram, Facebook e Twitter",
-                  "Discursos e roteiros de fala para eventos e sessões",
+                  "Posts otimizados para cada rede social",
+                  "Discursos e roteiros de fala",
+                  "Clipping e notas de imprensa",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-3 text-sm text-slate-300">
                     <Check size={14} className="text-emerald-400 mt-0.5 shrink-0" />
@@ -438,15 +438,15 @@ export default function LandingPage() {
                 ))}
               </div>
               <p className="text-slate-200 text-base leading-relaxed mb-6 italic">
-                &ldquo;Antes eu gastava 2 horas criando um post. Hoje o Gabinete Pro gera em 30 segundos, já com as notícias do dia integradas. Minha equipe virou estrategista, não mais digitadora.&rdquo;
+                &ldquo;Antes eu gastava 2 horas criando um post. Hoje o Gabinete Pro gera em 30 segundos, já com as notícias do dia integradas.&rdquo;
               </p>
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                  R
+                  V
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-100">Rafael Mendes</p>
-                  <p className="text-xs text-slate-500">Vereador · São Paulo — SP</p>
+                  <p className="text-sm font-semibold text-slate-100">Vereador</p>
+                  <p className="text-xs text-slate-500">São Paulo — SP</p>
                 </div>
               </div>
             </div>
