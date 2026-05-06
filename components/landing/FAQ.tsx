@@ -6,23 +6,23 @@ import { ChevronDown } from "lucide-react";
 const items = [
   {
     q: "Preciso saber de tecnologia para usar?",
-    a: "Não. O Gabinete Pro foi criado para políticos e assessores, não para programadores. A interface é simples e intuitiva — se você usa WhatsApp, consegue usar o Gabinete Pro.",
+    a: "Não. O Gabinete Pro foi criado para políticos e assessores, não para programadores. A interface é simples e intuitiva — se você usa WhatsApp, consegue usar o Gabinete Pro. O setup leva menos de 5 minutos.",
   },
   {
-    q: "Funciona para deputados e senadores também?",
-    a: "Sim. O sistema funciona para qualquer mandato político brasileiro: vereadores, prefeitos, deputados estaduais, deputados federais e senadores.",
+    q: "A IA entende o contexto político brasileiro?",
+    a: "Sim. O sistema é treinado especificamente para comunicação política no Brasil: linguagem dos municípios, estrutura de ofícios e Projetos de Lei, tom para sessões da câmara, posts para eleitorado brasileiro. Não é um ChatGPT genérico.",
   },
   {
-    q: "Minha equipe pode usar junto comigo?",
-    a: "Sim. Nos planos Assessor e Gabinete você convida membros da equipe com permissões diferentes para cada um — assessor, editor, visualizador e administrador.",
+    q: "Posso importar minha lista de eleitores atual?",
+    a: "Sim. Você faz upload de uma planilha Excel ou CSV com sua base atual e o sistema importa automaticamente. Também é possível exportar a qualquer momento para uso externo.",
   },
   {
-    q: "Posso cancelar a qualquer momento?",
-    a: "Sim. Não há fidelidade. Você cancela quando quiser diretamente pelo painel, sem burocracia, sem multa e sem necessidade de ligar para ninguém.",
+    q: "Funciona para qualquer cargo político?",
+    a: "Sim. O sistema funciona para vereadores, prefeitos, vice-prefeitos, deputados estaduais, deputados federais e senadores. Cada cargo tem fluxos e formatos adaptados.",
   },
   {
-    q: "Meus dados de eleitores ficam seguros?",
-    a: "Sim. Todos os dados são protegidos conforme a LGPD e ficam armazenados em servidores seguros no Brasil. Nunca compartilhamos ou vendemos seus dados.",
+    q: "O que acontece após os 7 dias grátis?",
+    a: "Você escolhe o plano que melhor se encaixa no seu mandato e continua com acesso completo. Se preferir não continuar, basta não assinar — sem cobrança automática, sem burocracia.",
   },
 ];
 
