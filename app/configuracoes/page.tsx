@@ -5,7 +5,7 @@ import {
   User, Mic2, Building2, Bell, Shield, CreditCard,
   Camera, Save, Eye, EyeOff, ChevronDown, Check,
   AtSign, Globe, Hash, Play, Music, RefreshCw,
-  CheckCircle2, LogOut,
+  CheckCircle2, LogOut, Copy, ExternalLink,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +48,7 @@ interface ProfileFull {
   notif_pautas: boolean;
   avatar_url: string | null;
   foto_gabinete_url: string | null;
+  slug: string | null;
 }
 
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -102,7 +103,7 @@ const EMPTY_PROFILE: Omit<ProfileFull, "id" | "email" | "plano" | "status" | "cr
   nome_gabinete: null, endereco_gabinete: null, telefone_gabinete: null,
   email_gabinete: null, horario_gabinete: null,
   notif_demandas: true, notif_resumo: true, notif_pautas: true,
-  avatar_url: null, foto_gabinete_url: null,
+  avatar_url: null, foto_gabinete_url: null, slug: null,
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -383,7 +384,55 @@ function PerfilSection({ profile, userId, onSaved }: { profile: ProfileFull; use
         </div>
       </SectionCard>
 
+      {profile.slug && (
+        <SectionCard title="Sua página pública">
+          <PublicLinkField slug={profile.slug} />
+        </SectionCard>
+      )}
+
       <SaveBar saving={saving} saved={saved} onSave={save} />
+    </div>
+  );
+}
+
+// ── PublicLinkField ─────────────────────────────────────────────────────────
+
+function PublicLinkField({ slug }: { slug: string }) {
+  const [copied, setCopied] = useState(false);
+  const url = `https://gabinete-pro.vercel.app/p/${slug}`;
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs text-slate-400 leading-relaxed">
+        Compartilhe este link com eleitores para que eles possam enviar mensagens e demandas diretamente para o seu gabinete.
+      </p>
+      <div className="flex items-center gap-2">
+        <div className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-blue-300 font-mono truncate">
+          {url}
+        </div>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 text-xs font-medium transition-colors shrink-0"
+        >
+          {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-blue-600/20 border border-blue-500/30 hover:bg-blue-600/30 text-blue-300 text-xs font-medium transition-colors shrink-0"
+        >
+          <ExternalLink size={13} />
+          Abrir
+        </a>
+      </div>
     </div>
   );
 }

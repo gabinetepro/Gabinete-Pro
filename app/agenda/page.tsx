@@ -1252,66 +1252,69 @@ export default function AgendaPage() {
       </Modal>
 
       {/* AI Suggestion Modal */}
-      <Modal
-        open={!!aiEvento}
-        onClose={() => { setAiEvento(null); setAiContent(null); setAiError(null); }}
-        title="Sugestões de Conteúdo IA"
-        size="lg"
-      >
-        {aiEvento && (
-          <div className="space-y-4">
-            <p className="text-xs text-slate-400">
-              Com base no evento <span className="text-slate-200 font-semibold">{aiEvento.titulo}</span> em{" "}
-              {parseDate(aiEvento.data).toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
-            </p>
+      {!!aiEvento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0f172a] border border-slate-700 rounded-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700 sticky top-0 bg-[#0f172a] z-10">
+              <h3 className="text-base font-semibold text-slate-100">Sugestões de Conteúdo IA</h3>
+              <button
+                onClick={() => { setAiEvento(null); setAiContent(null); setAiError(null); }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              <p className="text-xs text-slate-400">
+                Com base no evento <span className="text-slate-200 font-semibold">{aiEvento.titulo}</span> em{" "}
+                {parseDate(aiEvento.data).toLocaleDateString("pt-BR", { day: "numeric", month: "long" })}
+              </p>
 
-            {aiLoading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
-                <p className="text-sm text-slate-400">Gerando sugestões com IA...</p>
-              </div>
-            )}
+              {aiLoading && (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
+                  <p className="text-sm text-slate-400">Gerando sugestões com IA...</p>
+                </div>
+              )}
 
-            {aiError && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400">
-                {aiError}
-              </div>
-            )}
+              {aiError && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400">
+                  {aiError}
+                </div>
+              )}
 
-            {aiContent && !aiLoading && (
-              <div className="space-y-4">
-                {/* Post Instagram */}
-                <AiSuggestionCard
-                  icon="📱"
-                  label="Post para Instagram"
-                  content={aiContent.post}
-                  eventoTitulo={aiEvento.titulo}
-                  eventoData={aiEvento.data}
-                  eventoLocal={aiEvento.local}
-                />
-                {/* Ofício */}
-                <AiSuggestionCard
-                  icon="📄"
-                  label="Ofício sugerido"
-                  content={aiContent.oficio}
-                  eventoTitulo={aiEvento.titulo}
-                  eventoData={aiEvento.data}
-                  eventoLocal={aiEvento.local}
-                />
-                {/* Roteiro */}
-                <AiSuggestionCard
-                  icon="🎤"
-                  label="Roteiro de fala"
-                  content={aiContent.roteiro}
-                  eventoTitulo={aiEvento.titulo}
-                  eventoData={aiEvento.data}
-                  eventoLocal={aiEvento.local}
-                />
-              </div>
-            )}
+              {aiContent && !aiLoading && (
+                <div className="space-y-4">
+                  <AiSuggestionCard
+                    icon="📱"
+                    label="Post para Instagram"
+                    content={aiContent.post}
+                    eventoTitulo={aiEvento.titulo}
+                    eventoData={aiEvento.data}
+                    eventoLocal={aiEvento.local}
+                  />
+                  <AiSuggestionCard
+                    icon="📄"
+                    label="Ofício sugerido"
+                    content={aiContent.oficio}
+                    eventoTitulo={aiEvento.titulo}
+                    eventoData={aiEvento.data}
+                    eventoLocal={aiEvento.local}
+                  />
+                  <AiSuggestionCard
+                    icon="🎤"
+                    label="Roteiro de fala"
+                    content={aiContent.roteiro}
+                    eventoTitulo={aiEvento.titulo}
+                    eventoData={aiEvento.data}
+                    eventoLocal={aiEvento.local}
+                  />
+                </div>
+              )}
+            </div>
           </div>
-        )}
-      </Modal>
+        </div>
+      )}
     </AppShell>
   );
 }

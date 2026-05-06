@@ -289,10 +289,28 @@ export default function CriarConteudoPage() {
     partidoCargo: "",
   });
 
+  const [eventoParam, setEventoParam] = useState<string | null>(null);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tema = params.get("tema");
-    if (tema) setForm((f) => ({ ...f, tema }));
+    const tema   = params.get("tema");
+    const evento = params.get("evento");
+    const data   = params.get("data");
+    const local  = params.get("local");
+    const tipo   = params.get("tipo");
+
+    if (tema) {
+      setForm((f) => ({ ...f, tema }));
+    } else if (evento) {
+      const temaGerado = [evento, data ? `em ${data}` : null, local].filter(Boolean).join(" — ");
+      setForm((f) => ({
+        ...f,
+        tema: temaGerado,
+        plataforma: tipo === "post" ? "instagram" : f.plataforma,
+        formato: tipo === "post" ? "Foto Avulsa" : f.formato,
+      }));
+      setEventoParam(evento);
+    }
   }, []);
 
   const [tomVoz,         setTomVoz]   = useState("");
@@ -498,6 +516,15 @@ export default function CriarConteudoPage() {
 
           {/* ── FORMULÁRIO + AI QUESTIONS ──────────────────────── */}
           <div className="space-y-3">
+            {eventoParam && (
+              <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-blue-600/20 to-emerald-500/20 border border-blue-500/30">
+                <Sparkles size={15} className="text-blue-400 shrink-0" />
+                <p className="text-sm text-blue-200">
+                  <span className="font-semibold">Criando conteúdo para o evento:</span>{" "}
+                  <span className="text-slate-300">{eventoParam}</span>
+                </p>
+              </div>
+            )}
             <div className="bg-surface border border-border rounded-xl p-6 space-y-5">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center flex-shrink-0">

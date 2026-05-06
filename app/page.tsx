@@ -159,15 +159,15 @@ export default function LandingPage() {
                 ⚡ Inteligência Artificial para mandatos políticos
               </div>
 
-              <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-extrabold leading-[1.1] tracking-tight mb-6">
-                Enquanto você está{" "}
+              <h1 className="text-3xl sm:text-5xl lg:text-[56px] font-extrabold leading-[1.1] tracking-tight mb-6">
+                Nunca mais fique{" "}
                 <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent">
-                  na reunião,
+                  sem o que postar.
                 </span>
                 <br className="hidden sm:block" />
-                {" "}a IA já escreveu{" "}
+                {" "}Nem{" "}
                 <span className="bg-gradient-to-r from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-                  o post pra você.
+                  sem votos.
                 </span>
               </h1>
 
@@ -192,7 +192,7 @@ export default function LandingPage() {
               </div>
 
               <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-1.5 justify-center lg:justify-start text-xs text-slate-500">
-                {["7 dias grátis", "Sem cartão", "Cancele quando quiser"].map((t) => (
+                {["7 dias grátis", "Suporte incluso", "Cancele quando quiser"].map((t) => (
                   <span key={t} className="flex items-center gap-1.5">
                     <Check size={12} className="text-emerald-400" />
                     {t}
@@ -546,12 +546,12 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
 
-            {/* Solo */}
+            {/* Essencial */}
             <div className="bg-surface border border-border rounded-xl p-8">
-              <h3 className="text-base font-bold text-slate-100 mb-1">Solo</h3>
+              <h3 className="text-base font-bold text-slate-100 mb-1">Essencial</h3>
               <p className="text-xs text-slate-500 mb-6">Para vereadores que trabalham de forma independente</p>
               <div className="mb-8">
-                <span className="text-4xl font-extrabold text-slate-100">R$97</span>
+                <span className="text-4xl font-extrabold text-slate-100">R$197</span>
                 <span className="text-slate-400 text-sm">/mês</span>
               </div>
               <ul className="space-y-3 mb-8">
@@ -561,7 +561,7 @@ export default function LandingPage() {
                   "CRM de eleitores",
                   "Monitor de pautas",
                   "Agenda + Google Calendar",
-                  "Suporte por e-mail",
+                  "Suporte incluso",
                 ].map((f) => (
                   <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
                     <Check size={14} className="text-emerald-400 shrink-0" />
@@ -590,14 +590,14 @@ export default function LandingPage() {
                 <p className="text-xs text-slate-500 mb-6">Para mandatos com equipe de assessoria</p>
                 <div className="mb-8">
                   <span className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                    R$197
+                    R$297
                   </span>
                   <span className="text-slate-400 text-sm">/mês</span>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
                     "Até 5 usuários",
-                    "Tudo do plano Solo",
+                    "Tudo do plano Essencial",
                     "Cards de Conteúdo (Kanban)",
                     "Clipping + Monitor de pautas avançado",
                     "Gestão de equipe com permissões",
@@ -623,7 +623,7 @@ export default function LandingPage() {
               <h3 className="text-base font-bold text-slate-100 mb-1">Gabinete</h3>
               <p className="text-xs text-slate-500 mb-6">Para prefeitos e deputados com equipe completa</p>
               <div className="mb-8">
-                <span className="text-4xl font-extrabold text-slate-100">R$397</span>
+                <span className="text-4xl font-extrabold text-slate-100">R$497</span>
                 <span className="text-slate-400 text-sm">/mês</span>
               </div>
               <ul className="space-y-3 mb-8">
@@ -693,7 +693,7 @@ export default function LandingPage() {
                 <ArrowRight size={18} />
               </Link>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/60">
-                {["7 dias grátis", "Sem cartão de crédito", "Cancele quando quiser", "Setup em 5 minutos"].map((t) => (
+                {["7 dias grátis", "Suporte incluso", "Cancele quando quiser", "Setup em 5 minutos"].map((t) => (
                   <span key={t} className="flex items-center gap-1.5">
                     <Check size={11} className="text-emerald-300" />
                     {t}

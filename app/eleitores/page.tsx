@@ -30,7 +30,7 @@ interface Eleitor {
   escolaridade: string | null;
   faixa_renda: string | null;
   cep: string | null;
-  rua: string | null;
+  logradouro: string | null;
   numero: string | null;
   complemento: string | null;
   bairro: string | null;
@@ -162,7 +162,7 @@ function eleitorToForm(e: Eleitor): FormData {
     escolaridade:        e.escolaridade ?? "",
     faixa_renda:         e.faixa_renda ?? "",
     cep:                 e.cep ?? "",
-    rua:                 e.rua ?? "",
+    rua:                 e.logradouro ?? "",
     numero:              e.numero ?? "",
     complemento:         e.complemento ?? "",
     bairro:              e.bairro ?? "",
@@ -193,7 +193,7 @@ function buildPayload(f: FormData, userId: string) {
     escolaridade:         f.escolaridade || null,
     faixa_renda:          f.faixa_renda || null,
     cep:                  f.cep || null,
-    rua:                  f.rua || null,
+    logradouro:           f.rua || null,
     numero:               f.numero || null,
     complemento:          f.complemento || null,
     bairro:               f.bairro || null,
@@ -1120,7 +1120,7 @@ export default function EleitoresPage() {
     const headers = ["Nome","Email","Telefone","WhatsApp","Nascimento","Gênero","Profissão","Escolaridade","Renda","CEP","Rua","Número","Complemento","Bairro","Cidade","UF","Como Conheceu","Já Votou","Intenção","Engajamento","Temas","Aceita Comunicados","Pref. Contato","Tags","Observação","Cadastro"];
     const lines = rows.map(e =>
       [e.nome, e.email??'', e.telefone??'', e.whatsapp??'', e.data_nascimento??'', e.genero??'', e.profissao??'',
-       e.escolaridade??'', e.faixa_renda??'', e.cep??'', e.rua??'', e.numero??'', e.complemento??'',
+       e.escolaridade??'', e.faixa_renda??'', e.cep??'', e.logradouro??'', e.numero??'', e.complemento??'',
        e.bairro??'', e.cidade??'', e.uf??'', e.como_conheceu??'', e.votou_antes??'', e.intencao_voto??'',
        e.engajamento??'', (e.temas_interesse??[]).join(';'), e.aceita_comunicados?'Sim':'Não',
        e.preferencia_contato??'', (e.tags??[]).join(';'), e.observacoes??'', fmtDate(e.created_at),

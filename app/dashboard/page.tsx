@@ -528,6 +528,7 @@ export default function DashboardPage() {
               {eventosHoje.map((ev) => {
                 const hora = ev.hora_inicio ? ev.hora_inicio.slice(0, 5) : null;
                 const params = new URLSearchParams({
+                  tipo: "post",
                   evento: ev.titulo,
                   data: new Date().toISOString().split("T")[0],
                   ...(ev.local ? { local: ev.local } : {}),
