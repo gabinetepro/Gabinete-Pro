@@ -12,14 +12,13 @@ interface PoliticoProfile {
   foto_url: string | null;
   avatar_url: string | null;
   nome_gabinete: string | null;
+  slug: string | null;
 }
 
 interface Demanda {
   id: string;
-  titulo: string | null;
-  mensagem: string;
+  descricao: string | null;
   status: string;
-  categoria: string | null;
   created_at: string;
 }
 
@@ -29,47 +28,48 @@ const supabase = createClient(
 );
 
 export default async function PublicPage({ params }: { params: { slug: string } }) {
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, nome, nome_politico, cargo, partido, municipio, estado, foto_url, avatar_url, nome_gabinete")
-    .eq("slug", params.slug)
-    .single();
+  console.log("[p/slug] Buscando slug:", params.slug);
 
-  if (!profile) {
+  const { data: perfil, error: erroPerfil } = await supabase
+    .from("profiles")
+    .select("id, nome, nome_politico, cargo, partido, municipio, estado, foto_url, avatar_url, nome_gabinete, slug")
+    .eq("slug", params.slug)
+    .maybeSingle();
+
+  console.log("[p/slug] Resultado:", { id: perfil?.id, erro: erroPerfil?.message });
+
+  if (!perfil) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6">
-        <div className="w-full max-w-sm bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-8 text-center">
-            <div className="text-5xl mb-3">🏛️</div>
-            <h1 className="text-xl font-black text-white leading-tight">Perfil não encontrado</h1>
-          </div>
-          <div className="px-6 py-6 text-center space-y-4">
-            <p className="text-slate-500 text-sm leading-relaxed">O link pode estar incorreto ou o perfil ainda não foi configurado.</p>
-            <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-4 text-left">
-              <p className="text-xs text-blue-700 leading-relaxed">
-                <strong>Se você é o político:</strong> acesse as configurações do Gabinete Pro para ativar sua página pública.
-              </p>
-            </div>
-          </div>
-          <div className="px-6 pb-6 text-center">
-            <p className="text-xs text-slate-400">Powered by <span className="text-blue-500 font-semibold">Gabinete Pro</span></p>
-          </div>
+      <div className="min-h-screen bg-white flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
+          <div className="text-6xl mb-4">🏛️</div>
+          <h1 className="text-2xl font-bold text-gray-800 mb-2">Perfil não encontrado</h1>
+          <p className="text-gray-500 mb-4">
+            O link pode estar incorreto ou o perfil ainda não foi configurado.
+          </p>
+          <p className="text-sm text-gray-400">
+            Powered by{" "}
+            <a href="https://gabinete-pro.vercel.app" className="text-blue-500 hover:underline">
+              Gabinete Pro
+            </a>
+          </p>
         </div>
       </div>
     );
   }
 
   const { data: demandas } = await supabase
-    .from("demandas_publicas")
-    .select("id, titulo, mensagem, status, categoria, created_at")
-    .eq("politico_user_id", profile.id)
+    .from("demandas")
+    .select("id, descricao, status, created_at")
+    .eq("user_id", perfil.id)
+    .in("status", ["aberta", "em_andamento", "resolvida"])
     .order("created_at", { ascending: false })
-    .limit(10);
+    .limit(20);
 
   return (
     <PublicPageClient
-      profile={profile as PoliticoProfile}
-      initialDemandas={(demandas ?? []) as Demanda[]}
+      perfil={perfil as PoliticoProfile}
+      demandas={(demandas ?? []) as Demanda[]}
     />
   );
 }

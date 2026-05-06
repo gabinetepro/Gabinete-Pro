@@ -290,28 +290,8 @@ export default function CriarConteudoPage() {
   });
 
   const [eventoParam, setEventoParam] = useState<string | null>(null);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tema   = params.get("tema");
-    const evento = params.get("evento");
-    const data   = params.get("data");
-    const local  = params.get("local");
-    const tipo   = params.get("tipo");
-
-    if (tema) {
-      setForm((f) => ({ ...f, tema }));
-    } else if (evento) {
-      const temaGerado = [evento, data ? `em ${data}` : null, local].filter(Boolean).join(" — ");
-      setForm((f) => ({
-        ...f,
-        tema: temaGerado,
-        plataforma: tipo === "post" ? "instagram" : f.plataforma,
-        formato: tipo === "post" ? "Foto Avulsa" : f.formato,
-      }));
-      setEventoParam(evento);
-    }
-  }, []);
+  const [result,         setResult]         = useState<GeracaoResult | null>(null);
+  const [editedConteudo, setEditedConteudo] = useState("");
 
   const [tomVoz,         setTomVoz]   = useState("");
   const [textoReferencia, setTextoRef] = useState("");
@@ -342,8 +322,6 @@ export default function CriarConteudoPage() {
       });
   }, [user]);
 
-  const [result,         setResult]         = useState<GeracaoResult | null>(null);
-  const [editedConteudo, setEditedConteudo] = useState("");
   const [generating,     setGenerating]     = useState(false);
   const [saving,         setSaving]         = useState(false);
   const [copied,         setCopied]         = useState(false);
@@ -353,22 +331,48 @@ export default function CriarConteudoPage() {
   const [historyLoading, setHistoryLoading] = useState(true);
 
   useEffect(() => {
+    // Priority 1: sessionStorage (content from Agenda AI suggestions)
     const saved = sessionStorage.getItem('conteudo_gerado');
-    if (!saved) return;
-    sessionStorage.removeItem('conteudo_gerado');
-    try {
-      const parsed = JSON.parse(saved) as { tipo: string; texto: string; evento: string; data: string };
-      setResult({ conteudo: parsed.texto, hashtags: '' });
-      setEditedConteudo(parsed.texto);
-      setEventoParam(parsed.evento);
-      if (parsed.tipo === 'post') {
-        setForm((f) => ({ ...f, plataforma: 'instagram', formato: 'Foto Avulsa', tema: parsed.evento }));
-      } else if (parsed.tipo === 'oficio') {
-        setForm((f) => ({ ...f, plataforma: 'oficio', formato: '', tema: parsed.evento }));
-      } else if (parsed.tipo === 'roteiro') {
-        setForm((f) => ({ ...f, plataforma: 'discurso', formato: '', tema: parsed.evento }));
+    if (saved) {
+      sessionStorage.removeItem('conteudo_gerado');
+      try {
+        const parsed = JSON.parse(saved) as { tipo: string; texto: string; evento: string; data: string };
+        setResult({ conteudo: parsed.texto, hashtags: '' });
+        setEditedConteudo(parsed.texto);
+        setEventoParam(parsed.evento);
+        if (parsed.tipo === 'post') {
+          setForm((f) => ({ ...f, plataforma: 'instagram' as const, formato: 'Foto Avulsa', tema: parsed.evento }));
+        } else if (parsed.tipo === 'oficio') {
+          setForm((f) => ({ ...f, plataforma: 'oficio' as const, formato: '', tema: parsed.evento }));
+        } else if (parsed.tipo === 'roteiro') {
+          setForm((f) => ({ ...f, plataforma: 'discurso' as const, formato: '', tema: parsed.evento }));
+        }
+        return;
+      } catch (e) {
+        console.error('[criar-conteudo] Erro ao ler sessionStorage:', e);
       }
-    } catch {}
+    }
+
+    // Priority 2: URL params
+    const params = new URLSearchParams(window.location.search);
+    const tema   = params.get("tema");
+    const evento = params.get("evento");
+    const data   = params.get("data");
+    const local  = params.get("local");
+    const tipo   = params.get("tipo");
+
+    if (tema) {
+      setForm((f) => ({ ...f, tema }));
+    } else if (evento) {
+      const temaGerado = [evento, data ? `em ${data}` : null, local].filter(Boolean).join(" — ");
+      setForm((f) => ({
+        ...f,
+        tema: temaGerado,
+        plataforma: tipo === "post" ? "instagram" as const : f.plataforma,
+        formato: tipo === "post" ? "Foto Avulsa" : f.formato,
+      }));
+      setEventoParam(evento);
+    }
   }, []);
 
   // ── AI Questions ────────────────────────────────────────────

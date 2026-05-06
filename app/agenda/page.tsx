@@ -405,12 +405,10 @@ function AiSuggestionCard({
   }
 
   function handleOpenStudio() {
-    sessionStorage.setItem('conteudo_gerado', JSON.stringify({
-      tipo,
-      texto: content,
-      evento: eventoTitulo,
-      data: eventoData,
-    }));
+    const payload = { tipo, texto: content, evento: eventoTitulo, data: eventoData };
+    console.log('[agenda] Salvando no sessionStorage:', payload);
+    sessionStorage.setItem('conteudo_gerado', JSON.stringify(payload));
+    console.log('[agenda] Redirecionando para o Estúdio...');
     router.push('/criar-conteudo');
   }
 

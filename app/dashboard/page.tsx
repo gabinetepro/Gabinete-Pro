@@ -423,10 +423,11 @@ export default function DashboardPage() {
   );
   const [eventosHoje, setEventosHoje] = useState<EventoHoje[]>([]);
   const [eventosLoading, setEventosLoading] = useState(true);
-  const [modalEvento,     setModalEvento]     = useState<EventoHoje | null>(null);
-  const [sugestoes,       setSugestoes]       = useState<{ post: string; oficio: string; roteiro: string } | null>(null);
-  const [loadingSugestao, setLoadingSugestao] = useState(false);
-  const [sugestaoError,   setSugestaoError]   = useState<string | null>(null);
+  const [modalSugestao,     setModalSugestao]     = useState(false);
+  const [eventoSelecionado, setEventoSelecionado] = useState<EventoHoje | null>(null);
+  const [sugestoes,         setSugestoes]         = useState<{ post: string; oficio: string; roteiro: string } | null>(null);
+  const [loadingSugestao,   setLoadingSugestao]   = useState(false);
+  const [sugestaoError,     setSugestaoError]     = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -468,10 +469,11 @@ export default function DashboardPage() {
   }
 
   async function handleSugerirDashboard(evento: EventoHoje) {
-    setModalEvento(evento);
+    setEventoSelecionado(evento);
     setSugestoes(null);
     setSugestaoError(null);
     setLoadingSugestao(true);
+    setModalSugestao(true);
     try {
       const today = new Date().toISOString().split("T")[0];
       const res = await fetch('/api/agenda/sugerir', {
@@ -492,6 +494,13 @@ export default function DashboardPage() {
     } finally {
       setLoadingSugestao(false);
     }
+  }
+
+  function closeModal() {
+    setModalSugestao(false);
+    setEventoSelecionado(null);
+    setSugestoes(null);
+    setSugestaoError(null);
   }
 
   const planKey = (profile?.plano ?? "trial") as string;
@@ -543,6 +552,7 @@ export default function DashboardPage() {
   }
 
   return (
+    <>
     <AppShell
       title="Dashboard"
       subtitle="Visão geral do seu gabinete"
@@ -876,48 +886,56 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Dashboard AI Suggestion Modal */}
-      {modalEvento && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-[#0f172a] border border-slate-700 rounded-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+    </AppShell>
+
+      {/* Dashboard AI Suggestion Modal — rendered outside AppShell to avoid stacking issues */}
+      {modalSugestao && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70"
+          onClick={closeModal}
+        >
+          <div
+            className="bg-[#0f172a] border border-[#1e293b] rounded-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700 sticky top-0 bg-[#0f172a] z-10">
               <div>
-                <h3 className="text-base font-semibold text-slate-100">Sugestões de Conteúdo IA</h3>
-                <p className="text-xs text-slate-500 mt-0.5">{modalEvento.titulo}</p>
+                <h3 className="text-base font-bold text-white">
+                  ✨ Sugestões para: {eventoSelecionado?.titulo}
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">Gerado com IA</p>
               </div>
               <button
-                onClick={() => { setModalEvento(null); setSugestoes(null); setSugestaoError(null); }}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
+                onClick={closeModal}
+                className="text-slate-400 hover:text-white text-2xl leading-none"
               >
-                <X size={16} />
+                ×
               </button>
             </div>
             <div className="p-5 space-y-4">
               {loadingSugestao && (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
-                  <p className="text-sm text-slate-400">Gerando sugestões com IA...</p>
+                <div className="flex items-center justify-center py-12 gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+                  <span className="text-slate-400 text-sm">Gerando sugestões com IA...</span>
                 </div>
               )}
               {sugestaoError && (
-                <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400">
-                  {sugestaoError}
-                </div>
+                <p className="text-red-400 text-sm text-center py-8">{sugestaoError}</p>
               )}
               {sugestoes && !loadingSugestao && (
                 <div className="space-y-4">
                   {([
-                    { icon: "📱", label: "Post para Instagram", key: "post" as const,    tipo: "post"    },
-                    { icon: "📄", label: "Ofício sugerido",     key: "oficio" as const,  tipo: "oficio"  },
-                    { icon: "🎤", label: "Roteiro de fala",     key: "roteiro" as const, tipo: "roteiro" },
-                  ] as const).map(({ icon, label, key, tipo }) => (
+                    { key: "post"    as const, label: "📱 Post para Instagram" },
+                    { key: "oficio"  as const, label: "📄 Ofício sugerido"     },
+                    { key: "roteiro" as const, label: "🎤 Roteiro de fala"     },
+                  ] as const).map(({ key, label }) => (
                     <DashboardSugestaoCard
                       key={key}
-                      icon={icon}
+                      icon={label.slice(0, 2)}
                       label={label}
                       content={sugestoes[key]}
-                      tipo={tipo}
-                      eventoTitulo={modalEvento.titulo}
+                      tipo={key}
+                      eventoTitulo={eventoSelecionado?.titulo ?? ""}
                       eventoData={new Date().toISOString().split("T")[0]}
                     />
                   ))}
@@ -927,7 +945,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-    </AppShell>
+    </>
   );
 }
 
