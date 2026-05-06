@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -384,15 +385,17 @@ function GoogleCard({
 // ── AiSuggestionCard ───────────────────────────────────────────────
 
 function AiSuggestionCard({
-  icon, label, content, eventoTitulo, eventoData, eventoLocal,
+  icon, label, content, tipo, eventoTitulo, eventoData, eventoLocal,
 }: {
   icon: string;
   label: string;
   content: string;
+  tipo: string;
   eventoTitulo: string;
   eventoData: string;
   eventoLocal: string | null;
 }) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
 
   function handleCopy() {
@@ -401,7 +404,15 @@ function AiSuggestionCard({
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const studioUrl = `/criar-conteudo?evento=${encodeURIComponent(eventoTitulo)}&data=${encodeURIComponent(eventoData)}&local=${encodeURIComponent(eventoLocal ?? "")}`;
+  function handleOpenStudio() {
+    sessionStorage.setItem('conteudo_gerado', JSON.stringify({
+      tipo,
+      texto: content,
+      evento: eventoTitulo,
+      data: eventoData,
+    }));
+    router.push('/criar-conteudo');
+  }
 
   return (
     <div className="bg-background border border-border rounded-xl overflow-hidden">
@@ -420,13 +431,13 @@ function AiSuggestionCard({
           {copied ? <Check size={12} /> : <Copy size={12} />}
           {copied ? "Copiado!" : "Copiar"}
         </button>
-        <a
-          href={studioUrl}
+        <button
+          onClick={handleOpenStudio}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:opacity-90 transition-opacity"
         >
           <Sparkles size={12} />
           Abrir no Estúdio
-        </a>
+        </button>
       </div>
     </div>
   );
@@ -1289,6 +1300,7 @@ export default function AgendaPage() {
                     icon="📱"
                     label="Post para Instagram"
                     content={aiContent.post}
+                    tipo="post"
                     eventoTitulo={aiEvento.titulo}
                     eventoData={aiEvento.data}
                     eventoLocal={aiEvento.local}
@@ -1297,6 +1309,7 @@ export default function AgendaPage() {
                     icon="📄"
                     label="Ofício sugerido"
                     content={aiContent.oficio}
+                    tipo="oficio"
                     eventoTitulo={aiEvento.titulo}
                     eventoData={aiEvento.data}
                     eventoLocal={aiEvento.local}
@@ -1305,6 +1318,7 @@ export default function AgendaPage() {
                     icon="🎤"
                     label="Roteiro de fala"
                     content={aiContent.roteiro}
+                    tipo="roteiro"
                     eventoTitulo={aiEvento.titulo}
                     eventoData={aiEvento.data}
                     eventoLocal={aiEvento.local}

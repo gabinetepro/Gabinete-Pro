@@ -37,15 +37,19 @@ export async function POST(request: Request) {
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+
   try {
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: "Você é um especialista em comunicação política brasileira.",
-      messages: [
-        {
-          role: "user",
-          content: `Político: ${profile?.nome || ""}${profile?.cargo ? `, ${profile.cargo}` : ""}${profile?.partido ? ` - ${profile.partido}` : ""}.
+    const message = await anthropic.messages.create(
+      {
+        model: "claude-sonnet-4-6",
+        max_tokens: 1024,
+        system: "Você é um especialista em comunicação política brasileira.",
+        messages: [
+          {
+            role: "user",
+            content: `Político: ${profile?.nome || ""}${profile?.cargo ? `, ${profile.cargo}` : ""}${profile?.partido ? ` - ${profile.partido}` : ""}.
 Tom de voz: ${profile?.tom_de_voz || "formal e institucional"}.
 
 O político tem o seguinte evento:
@@ -56,20 +60,26 @@ Descrição: ${descricao || "sem descrição"}
 
 Gere 3 sugestões de conteúdo e retorne APENAS um objeto JSON válido, sem markdown, sem explicações, no formato exato:
 {"post":"texto do post para Instagram com até 150 palavras","oficio":"texto do ofício formal","roteiro":"roteiro de fala de 2 minutos para o evento"}`,
-        },
-      ],
-    });
+          },
+        ],
+      },
+      { signal: controller.signal }
+    );
+    clearTimeout(timeout);
 
-    const rawText = message.content[0].type === "text" ? message.content[0].text : "";
-    const parsed = JSON.parse(rawText) as { post: string; oficio: string; roteiro: string };
+    const rawText = message.content[0].type === "text" ? message.content[0].text.trim() : "";
+    // Strip markdown code fences if present
+    const jsonText = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+    const parsed = JSON.parse(jsonText) as { post: string; oficio: string; roteiro: string };
 
     return NextResponse.json({
-      post: parsed.post,
-      oficio: parsed.oficio,
-      roteiro: parsed.roteiro,
+      post: parsed.post ?? "",
+      oficio: parsed.oficio ?? "",
+      roteiro: parsed.roteiro ?? "",
     });
   } catch (err) {
-    console.error("[sugerir] Anthropic error:", err);
-    return NextResponse.json({ error: "Erro ao gerar sugestões com IA." }, { status: 500 });
+    clearTimeout(timeout);
+    console.error("[sugerir] error:", err);
+    return NextResponse.json({ error: "Erro ao gerar sugestões com IA. Tente novamente." }, { status: 500 });
   }
 }

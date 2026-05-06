@@ -352,6 +352,25 @@ export default function CriarConteudoPage() {
   const [history,        setHistory]        = useState<ConteudoSalvo[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
 
+  useEffect(() => {
+    const saved = sessionStorage.getItem('conteudo_gerado');
+    if (!saved) return;
+    sessionStorage.removeItem('conteudo_gerado');
+    try {
+      const parsed = JSON.parse(saved) as { tipo: string; texto: string; evento: string; data: string };
+      setResult({ conteudo: parsed.texto, hashtags: '' });
+      setEditedConteudo(parsed.texto);
+      setEventoParam(parsed.evento);
+      if (parsed.tipo === 'post') {
+        setForm((f) => ({ ...f, plataforma: 'instagram', formato: 'Foto Avulsa', tema: parsed.evento }));
+      } else if (parsed.tipo === 'oficio') {
+        setForm((f) => ({ ...f, plataforma: 'oficio', formato: '', tema: parsed.evento }));
+      } else if (parsed.tipo === 'roteiro') {
+        setForm((f) => ({ ...f, plataforma: 'discurso', formato: '', tema: parsed.evento }));
+      }
+    } catch {}
+  }, []);
+
   // ── AI Questions ────────────────────────────────────────────
   const [aiPhase,       setAiPhase]       = useState<AiPhase>("idle");
   const [aiAnswers,     setAiAnswers]     = useState<string[]>([]);

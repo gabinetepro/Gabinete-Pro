@@ -125,9 +125,10 @@ export default function LandingPage() {
       {/* ── HEADER ── */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-extrabold bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent tracking-tight">
-            🏛️ Gabinete Pro
-          </span>
+          <Link href="/" className="flex items-center gap-1.5">
+            <span>🏛️</span>
+            <span className="text-xl font-extrabold bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent tracking-tight">Gabinete Pro</span>
+          </Link>
           <nav className="flex items-center gap-3">
             <Link
               href="/login"
@@ -708,9 +709,10 @@ export default function LandingPage() {
       {/* ── FOOTER ── */}
       <footer className="border-t border-border bg-surface/30 py-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-lg font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-            🏛️ Gabinete Pro
-          </span>
+          <Link href="/" className="flex items-center gap-1.5">
+            <span>🏛️</span>
+            <span className="text-lg font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Gabinete Pro</span>
+          </Link>
           <div className="flex items-center gap-6 text-sm text-slate-500">
             <a href="#" className="hover:text-slate-300 transition-colors">Política de Privacidade</a>
             <a href="#" className="hover:text-slate-300 transition-colors">Termos de Uso</a>

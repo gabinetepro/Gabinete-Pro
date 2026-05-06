@@ -19,6 +19,9 @@ import {
   BarChart3,
   UserPlus,
   Sparkles,
+  Copy,
+  Check,
+  X,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import EleitoresChart from "@/components/dashboard/EleitoresChart";
@@ -349,6 +352,65 @@ function MetricCard({
   );
 }
 
+// ── DashboardSugestaoCard ──────────────────────────────────────────
+function DashboardSugestaoCard({
+  icon, label, content, tipo, eventoTitulo, eventoData,
+}: {
+  icon: string;
+  label: string;
+  content: string;
+  tipo: string;
+  eventoTitulo: string;
+  eventoData: string;
+}) {
+  const router = useRouter();
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function handleOpenStudio() {
+    sessionStorage.setItem('conteudo_gerado', JSON.stringify({
+      tipo,
+      texto: content,
+      evento: eventoTitulo,
+      data: eventoData,
+    }));
+    router.push('/criar-conteudo');
+  }
+
+  return (
+    <div className="bg-background border border-border rounded-xl overflow-hidden">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-slate-800/40">
+        <span>{icon}</span>
+        <span className="text-xs font-semibold text-slate-300">{label}</span>
+      </div>
+      <div className="p-4">
+        <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap max-h-40 overflow-y-auto">{content}</p>
+      </div>
+      <div className="flex items-center gap-2 px-4 pb-3">
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-slate-400 hover:text-slate-200 hover:border-blue-500/40 transition-colors"
+        >
+          {copied ? <Check size={12} /> : <Copy size={12} />}
+          {copied ? "Copiado!" : "Copiar"}
+        </button>
+        <button
+          onClick={handleOpenStudio}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:opacity-90 transition-opacity"
+        >
+          <Sparkles size={12} />
+          Abrir no Estúdio
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const router = useRouter();
@@ -361,6 +423,10 @@ export default function DashboardPage() {
   );
   const [eventosHoje, setEventosHoje] = useState<EventoHoje[]>([]);
   const [eventosLoading, setEventosLoading] = useState(true);
+  const [modalEvento,     setModalEvento]     = useState<EventoHoje | null>(null);
+  const [sugestoes,       setSugestoes]       = useState<{ post: string; oficio: string; roteiro: string } | null>(null);
+  const [loadingSugestao, setLoadingSugestao] = useState(false);
+  const [sugestaoError,   setSugestaoError]   = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -399,6 +465,33 @@ export default function DashboardPage() {
   async function handleSignOut() {
     await signOut();
     router.push("/login");
+  }
+
+  async function handleSugerirDashboard(evento: EventoHoje) {
+    setModalEvento(evento);
+    setSugestoes(null);
+    setSugestaoError(null);
+    setLoadingSugestao(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch('/api/agenda/sugerir', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titulo: evento.titulo,
+          data: today,
+          local: evento.local,
+          descricao: null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao gerar sugestões');
+      setSugestoes(data as { post: string; oficio: string; roteiro: string });
+    } catch (e) {
+      setSugestaoError(e instanceof Error ? e.message : 'Erro ao gerar sugestões. Tente novamente.');
+    } finally {
+      setLoadingSugestao(false);
+    }
   }
 
   const planKey = (profile?.plano ?? "trial") as string;
@@ -527,12 +620,6 @@ export default function DashboardPage() {
             <div className="divide-y divide-border">
               {eventosHoje.map((ev) => {
                 const hora = ev.hora_inicio ? ev.hora_inicio.slice(0, 5) : null;
-                const params = new URLSearchParams({
-                  tipo: "post",
-                  evento: ev.titulo,
-                  data: new Date().toISOString().split("T")[0],
-                  ...(ev.local ? { local: ev.local } : {}),
-                });
                 return (
                   <div key={ev.id} className="flex items-center gap-4 px-5 py-3.5 hover:bg-slate-700/20 transition-colors">
                     <div className="w-10 h-10 rounded-lg bg-blue-500/10 border border-blue-500/20 flex flex-col items-center justify-center shrink-0">
@@ -546,13 +633,13 @@ export default function DashboardPage() {
                         {ev.local}
                       </p>
                     </div>
-                    <Link
-                      href={`/criar-conteudo?${params.toString()}`}
+                    <button
+                      onClick={() => handleSugerirDashboard(ev)}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-blue-600/20 to-emerald-500/20 border border-blue-500/30 text-blue-300 hover:from-blue-600/30 hover:to-emerald-500/30 transition-all whitespace-nowrap shrink-0"
                     >
                       <Sparkles size={11} />
                       Sugerir conteúdo
-                    </Link>
+                    </button>
                   </div>
                 );
               })}
@@ -788,6 +875,58 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Dashboard AI Suggestion Modal */}
+      {modalEvento && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-[#0f172a] border border-slate-700 rounded-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700 sticky top-0 bg-[#0f172a] z-10">
+              <div>
+                <h3 className="text-base font-semibold text-slate-100">Sugestões de Conteúdo IA</h3>
+                <p className="text-xs text-slate-500 mt-0.5">{modalEvento.titulo}</p>
+              </div>
+              <button
+                onClick={() => { setModalEvento(null); setSugestoes(null); setSugestaoError(null); }}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-700 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {loadingSugestao && (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <div className="w-10 h-10 rounded-full border-2 border-blue-500/30 border-t-blue-400 animate-spin" />
+                  <p className="text-sm text-slate-400">Gerando sugestões com IA...</p>
+                </div>
+              )}
+              {sugestaoError && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-3 text-sm text-red-400">
+                  {sugestaoError}
+                </div>
+              )}
+              {sugestoes && !loadingSugestao && (
+                <div className="space-y-4">
+                  {([
+                    { icon: "📱", label: "Post para Instagram", key: "post" as const,    tipo: "post"    },
+                    { icon: "📄", label: "Ofício sugerido",     key: "oficio" as const,  tipo: "oficio"  },
+                    { icon: "🎤", label: "Roteiro de fala",     key: "roteiro" as const, tipo: "roteiro" },
+                  ] as const).map(({ icon, label, key, tipo }) => (
+                    <DashboardSugestaoCard
+                      key={key}
+                      icon={icon}
+                      label={label}
+                      content={sugestoes[key]}
+                      tipo={tipo}
+                      eventoTitulo={modalEvento.titulo}
+                      eventoData={new Date().toISOString().split("T")[0]}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </AppShell>
   );
 }
