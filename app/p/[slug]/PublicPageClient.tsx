@@ -7,6 +7,19 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+const ASSUNTOS = [
+  'Infraestrutura',
+  'Saúde',
+  'Educação',
+  'Segurança',
+  'Meio Ambiente',
+  'Habitação',
+  'Assistência Social',
+  'Transporte',
+  'Emprego',
+  'Outro',
+]
+
 interface Perfil {
   id: string
   nome: string
@@ -20,6 +33,7 @@ interface Demanda {
   status: string
   created_at: string
   nome_solicitante: string
+  assunto?: string
 }
 
 export default function PublicPageClient({
@@ -31,6 +45,7 @@ export default function PublicPageClient({
 }) {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
+  const [assunto, setAssunto] = useState('')
   const [descricao, setDescricao] = useState('')
   const [enviado, setEnviado] = useState(false)
   const [enviando, setEnviando] = useState(false)
@@ -38,12 +53,13 @@ export default function PublicPageClient({
 
   const handleEnviar = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!nome || !descricao) return
+    if (!nome || !telefone || !assunto || !descricao) return
     setEnviando(true)
     const { data, error } = await supabase.from('demandas').insert({
       user_id: perfil.id,
       nome_solicitante: nome,
       telefone_solicitante: telefone,
+      assunto,
       descricao,
       status: 'aberta',
     }).select().single()
@@ -52,6 +68,7 @@ export default function PublicPageClient({
       setEnviado(true)
       setNome('')
       setTelefone('')
+      setAssunto('')
       setDescricao('')
       setTimeout(() => setEnviado(false), 4000)
     }
@@ -63,6 +80,8 @@ export default function PublicPageClient({
     em_andamento: { label: 'Em andamento', className: 'bg-blue-100 text-blue-800' },
     resolvida: { label: 'Resolvida', className: 'bg-green-100 text-green-800' },
   }
+
+  const inputCls = 'w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -97,22 +116,34 @@ export default function PublicPageClient({
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
                 required
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputCls}
               />
               <input
                 type="tel"
-                placeholder="Seu WhatsApp (opcional)"
+                placeholder="Seu WhatsApp *"
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
+                className={inputCls}
               />
+              <select
+                value={assunto}
+                onChange={(e) => setAssunto(e.target.value)}
+                required
+                className={`${inputCls} bg-white text-gray-800 ${!assunto ? 'text-gray-400' : ''}`}
+              >
+                <option value="" disabled>Assunto *</option>
+                {ASSUNTOS.map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
               <textarea
                 placeholder="Descreva sua demanda ou solicitação *"
                 value={descricao}
                 onChange={(e) => setDescricao(e.target.value)}
                 required
                 rows={4}
-                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className={`${inputCls} resize-none`}
               />
               <button
                 type="submit"
@@ -143,6 +174,11 @@ export default function PublicPageClient({
                         <p className="text-xs text-gray-400 mb-1">
                           {d.nome_solicitante}
                         </p>
+                      )}
+                      {d.assunto && (
+                        <span className="inline-block text-xs bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-full font-medium mb-2">
+                          {d.assunto}
+                        </span>
                       )}
                       <p className="text-gray-700 text-sm">{d.descricao}</p>
                     </div>
