@@ -385,7 +385,7 @@ function GoogleCard({
 // ── AiSuggestionCard ───────────────────────────────────────────────
 
 function AiSuggestionCard({
-  icon, label, content, tipo, eventoTitulo, eventoData, eventoLocal,
+  icon, label, content, tipo, eventoTitulo, eventoData,
 }: {
   icon: string;
   label: string;
@@ -393,7 +393,7 @@ function AiSuggestionCard({
   tipo: string;
   eventoTitulo: string;
   eventoData: string;
-  eventoLocal: string | null;
+  eventoLocal?: string | null;
 }) {
   const router = useRouter();
   const [copied, setCopied] = useState(false);

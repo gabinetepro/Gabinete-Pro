@@ -21,7 +21,6 @@ import {
   Sparkles,
   Copy,
   Check,
-  X,
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import EleitoresChart from "@/components/dashboard/EleitoresChart";
