@@ -11,8 +11,10 @@ export async function GET(request: NextRequest) {
     | "signup"
     | "recovery"
     | "email"
+    | "invite"
     | null;
-  const next = searchParams.get("next") ?? "/dashboard";
+  const isInvite = type === "invite";
+  const next = searchParams.get("next") ?? (isInvite ? "/auth/definir-senha" : "/dashboard");
 
   if (code || token_hash) {
     const cookieStore = cookies();
@@ -41,9 +43,13 @@ export async function GET(request: NextRequest) {
     }
 
     if (token_hash && type) {
-      const { error } = await supabase.auth.verifyOtp({ token_hash, type });
+      const { error } = await supabase.auth.verifyOtp({
+        token_hash,
+        type: type === "invite" ? "invite" : type,
+      });
       if (!error) {
-        return NextResponse.redirect(`${origin}${next}`);
+        const destination = isInvite ? "/auth/definir-senha" : next;
+        return NextResponse.redirect(`${origin}${destination}`);
       }
     }
   }
