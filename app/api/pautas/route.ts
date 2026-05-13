@@ -1,10 +1,39 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { verificarLimiteIA, incrementarUsoIA } from "@/lib/limites";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(req: Request) {
   try {
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cs) => cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+        },
+      }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+
+    const { data: profile } = await supabase
+      .from("profiles").select("plano").eq("id", user.id).maybeSingle();
+    const plano = profile?.plano ?? "essencial";
+
+    const { ok, limite } = await verificarLimiteIA(user.id, plano);
+    if (!ok) {
+      return NextResponse.json(
+        { error: `Limite de ${limite} gerações de IA por mês atingido. Faça upgrade para continuar.` },
+        { status: 429 }
+      );
+    }
+
     const { municipio, estado, cargo, interesses } = (await req.json()) as {
       municipio: string;
       estado: string;
@@ -62,6 +91,7 @@ Distribua pelo menos 3 pautas com relevância "Alta" e o restante com "Média". 
     if (!jsonMatch) throw new Error("Resposta inválida da IA");
 
     const pautas = JSON.parse(jsonMatch[0]);
+    await incrementarUsoIA(user.id);
     return NextResponse.json({ pautas });
   } catch (err) {
     console.error("[pautas]", err);

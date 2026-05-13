@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Anthropic from "@anthropic-ai/sdk";
+import { verificarLimiteIA, incrementarUsoIA } from "@/lib/limites";
 
 export async function POST(request: Request) {
   const cookieStore = cookies();
@@ -20,6 +21,16 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+  }
+
+  const { data: perfilLimite } = await supabase
+    .from("profiles").select("plano").eq("id", user.id).maybeSingle();
+  const { ok, limite } = await verificarLimiteIA(user.id, perfilLimite?.plano ?? "essencial");
+  if (!ok) {
+    return NextResponse.json(
+      { error: `Limite de ${limite} gerações de IA por mês atingido. Faça upgrade para continuar.` },
+      { status: 429 }
+    );
   }
 
   const { titulo, data, local, descricao } = await request.json() as {
@@ -72,6 +83,7 @@ Gere 3 sugestões de conteúdo e retorne APENAS um objeto JSON válido, sem mark
     const jsonText = rawText.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
     const parsed = JSON.parse(jsonText) as { post: string; oficio: string; roteiro: string };
 
+    await incrementarUsoIA(user.id);
     return NextResponse.json({
       post: parsed.post ?? "",
       oficio: parsed.oficio ?? "",

@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
+import { verificarLimiteIA, incrementarUsoIA } from "@/lib/limites";
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -216,6 +219,32 @@ function getMaxTokens(plataforma: string, formato: string): number {
 
 export async function POST(req: Request) {
   try {
+    const cookieStore = cookies();
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll: () => cookieStore.getAll(),
+          setAll: (cs) => cs.forEach(({ name, value, options }) => cookieStore.set(name, value, options)),
+        },
+      }
+    );
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
+
+    const { data: perfil } = await supabase
+      .from("profiles").select("plano").eq("id", user.id).maybeSingle();
+    const plano = perfil?.plano ?? "essencial";
+
+    const { ok, limite } = await verificarLimiteIA(user.id, plano);
+    if (!ok) {
+      return NextResponse.json(
+        { error: `Limite de ${limite} gerações de IA por mês atingido. Faça upgrade para continuar.` },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const {
       plataforma,
@@ -277,6 +306,7 @@ export async function POST(req: Request) {
       hashtags = fullText.slice(hashtagIndex + hashtagMarker.length).trim();
     }
 
+    await incrementarUsoIA(user.id);
     return NextResponse.json({ conteudo, hashtags });
   } catch (err) {
     console.error("[gerar-conteudo]", err);

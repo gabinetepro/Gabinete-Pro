@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import AppMockup from "@/components/landing/AppMockup";
 import FAQ from "@/components/landing/FAQ";
+import PlanosSection from "@/components/landing/PlanosSection";
 
 // ── Feature showcase mockups ────────────────────────────────────────────────
 
@@ -517,6 +518,7 @@ export default function LandingPage() {
               { icon: Users,         emoji: "👥", title: "CRM de Eleitores",        desc: "Histórico completo, segmentação por tags, importação CSV e página pública com protocolo." },
               { icon: Layout,        emoji: "📋", title: "Cards de Conteúdo",       desc: "Kanban estilo Trello para a equipe: rascunho → revisão → aprovado → publicado." },
               { icon: UserCog,       emoji: "👤", title: "Gestão de Equipe",        desc: "Convites com permissões granulares. Assessores veem só o que precisam ver." },
+              { icon: UserCog,       emoji: "📊", title: "Análise Mensal",          desc: "Todo mês um especialista analisa as métricas do mandato e entrega recomendações. Incluso em todos os planos." },
             ].map(({ emoji, title, desc }) => (
               <div key={title} className="flex gap-4 p-6 rounded-xl bg-surface border border-border hover:border-emerald-500/20 transition-all duration-200 group">
                 <div className="w-10 h-10 shrink-0 rounded-lg bg-gradient-to-br from-blue-600/20 to-emerald-500/20 border border-blue-500/20 flex items-center justify-center text-lg group-hover:border-emerald-500/40 transition-colors">
@@ -532,126 +534,51 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* ── PLANOS ── */}
-      <section id="planos" className="py-24 bg-background">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-emerald-400 mb-3">PLANOS</p>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-100 tracking-tight">
-              Escolha o plano do seu mandato
+      {/* ── EQUIPE vs APP ── */}
+      <section className="py-24 bg-surface/20">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="text-center mb-14">
+            <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-3">EQUIPE + TECNOLOGIA</p>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-100 tracking-tight leading-tight">
+              O Gabinete Pro não substitui sua equipe —<br className="hidden sm:block" />
+              ele faz cada assessor render <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">3× mais.</span>
             </h2>
-            <p className="mt-4 text-slate-400">
-              Acesso completo liberado imediatamente. 7 dias grátis em todos os planos.
-            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-
-            {/* Essencial */}
-            <div className="bg-surface border border-border rounded-xl p-8">
-              <h3 className="text-base font-bold text-slate-100 mb-1">Essencial</h3>
-              <p className="text-xs text-slate-500 mb-6">Para vereadores que trabalham de forma independente</p>
-              <div className="mb-8">
-                <span className="text-4xl font-extrabold text-slate-100">R$197</span>
-                <span className="text-slate-400 text-sm">/mês</span>
-              </div>
-              <ul className="space-y-3 mb-8">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-3 pr-6 text-slate-400 font-semibold w-1/3">Tarefa</th>
+                  <th className="text-center py-3 px-4 text-red-400 font-semibold">Equipe tradicional</th>
+                  <th className="text-center py-3 px-4 text-emerald-400 font-semibold">Com Gabinete Pro</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
                 {[
-                  "1 usuário",
-                  "Todas as funcionalidades de IA",
-                  "CRM de eleitores",
-                  "Monitor de pautas",
-                  "Agenda + Google Calendar",
-                  "Suporte incluso",
-                ].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
-                    <Check size={14} className="text-emerald-400 shrink-0" />
-                    {f}
-                  </li>
+                  ["Criar post para Instagram",  "2 a 3 horas",  "30 segundos"],
+                  ["Redigir ofício formal",       "1 hora",       "1 minuto"],
+                  ["Monitorar notícias locais",   "Manual, esporádico", "Automático, em tempo real"],
+                  ["Organizar eleitores",         "Planilha Excel", "CRM com histórico completo"],
+                  ["Custo mensal estimado",       "R$6.000–R$11.000", "a partir de R$141/mês"],
+                ].map(([tarefa, antes, depois]) => (
+                  <tr key={tarefa} className="hover:bg-slate-800/20 transition-colors">
+                    <td className="py-3.5 pr-6 text-slate-300 font-medium">{tarefa}</td>
+                    <td className="py-3.5 px-4 text-center text-red-400">{antes}</td>
+                    <td className="py-3.5 px-4 text-center text-emerald-400 font-semibold">{depois}</td>
+                  </tr>
                 ))}
-              </ul>
-              <Link
-                href="/cadastro"
-                className="block w-full text-center py-3 text-sm font-semibold rounded-lg border border-border text-slate-300 hover:border-blue-500/50 hover:text-slate-100 transition-all"
-              >
-                Começar grátis
-              </Link>
-            </div>
-
-            {/* Profissional — destaque */}
-            <div className="relative">
-              <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 blur-[2px] opacity-70" />
-              <div className="relative bg-surface rounded-xl p-8">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="px-4 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg">
-                    ★ Mais popular
-                  </span>
-                </div>
-                <h3 className="text-base font-bold text-slate-100 mb-1">Profissional</h3>
-                <p className="text-xs text-slate-500 mb-6">Para mandatos com equipe de assessoria</p>
-                <div className="mb-8">
-                  <span className="text-4xl font-extrabold bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                    R$297
-                  </span>
-                  <span className="text-slate-400 text-sm">/mês</span>
-                </div>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "Até 5 usuários",
-                    "Tudo do plano Essencial",
-                    "Cards de Conteúdo (Kanban)",
-                    "Clipping + Monitor de pautas avançado",
-                    "Gestão de equipe com permissões",
-                    "Suporte prioritário",
-                  ].map((f) => (
-                    <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
-                      <Check size={14} className="text-emerald-400 shrink-0" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/cadastro"
-                  className="block w-full text-center py-3 text-sm font-semibold rounded-lg bg-gradient-to-r from-blue-600 to-emerald-500 text-white hover:from-blue-500 hover:to-emerald-400 transition-all hover:shadow-glow"
-                >
-                  Começar grátis
-                </Link>
-              </div>
-            </div>
-
-            {/* Gabinete */}
-            <div className="bg-surface border border-border rounded-xl p-8">
-              <h3 className="text-base font-bold text-slate-100 mb-1">Gabinete</h3>
-              <p className="text-xs text-slate-500 mb-6">Para prefeitos e deputados com equipe completa</p>
-              <div className="mb-8">
-                <span className="text-4xl font-extrabold text-slate-100">R$497</span>
-                <span className="text-slate-400 text-sm">/mês</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {[
-                  "Até 15 usuários",
-                  "Tudo do plano Profissional",
-                  "Sem limites de geração IA",
-                  "Importação em massa de eleitores",
-                  "Exportação CSV completa",
-                  "Onboarding personalizado + suporte VIP",
-                ].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm text-slate-300">
-                    <Check size={14} className="text-emerald-400 shrink-0" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/cadastro"
-                className="block w-full text-center py-3 text-sm font-semibold rounded-lg border border-border text-slate-300 hover:border-blue-500/50 hover:text-slate-100 transition-all"
-              >
-                Falar com a equipe
-              </Link>
-            </div>
+              </tbody>
+            </table>
           </div>
+          <p className="text-xs text-slate-600 mt-4 text-center">
+            *Estimativa para equipe de comunicação de 2 a 3 profissionais.
+          </p>
         </div>
       </section>
+
+      {/* ── PLANOS ── */}
+      <PlanosSection />
 
       {/* ── FAQ ── */}
       <section id="faq" className="py-24 bg-surface/20">

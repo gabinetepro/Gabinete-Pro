@@ -24,8 +24,10 @@ import {
 } from "lucide-react";
 import AppShell from "@/components/layout/AppShell";
 import EleitoresChart from "@/components/dashboard/EleitoresChart";
+import OnboardingModal from "@/components/onboarding/OnboardingModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { LIMITES_PLANO } from "@/lib/limites";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 interface MetricData {
@@ -427,6 +429,8 @@ export default function DashboardPage() {
   const [sugestoes,         setSugestoes]         = useState<{ post: string; oficio: string; roteiro: string } | null>(null);
   const [loadingSugestao,   setLoadingSugestao]   = useState(false);
   const [sugestaoError,     setSugestaoError]     = useState<string | null>(null);
+  const [showOnboarding,    setShowOnboarding]    = useState(false);
+  const [usoIA,             setUsoIA]             = useState<{ uso: number; limite: number } | null>(null);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -446,6 +450,33 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!authLoading && user) loadData();
   }, [authLoading, user, loadData]);
+
+  // Check onboarding
+  useEffect(() => {
+    if (profile && (profile as unknown as Record<string, unknown>).onboarding_completo === false) {
+      setShowOnboarding(true);
+    }
+  }, [profile]);
+
+  // Fetch uso IA do mês atual
+  useEffect(() => {
+    if (!user) return;
+    const now = new Date();
+    const mes = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    supabase
+      .from("uso_ia")
+      .select("quantidade")
+      .eq("user_id", user.id)
+      .eq("mes", mes)
+      .maybeSingle()
+      .then(({ data }) => {
+        const plano = ((profile as unknown as Record<string, unknown>)?.plano as string) ?? "essencial";
+        const limite = LIMITES_PLANO[plano] ?? LIMITES_PLANO.essencial;
+        if (limite < 999999) {
+          setUsoIA({ uso: data?.quantidade ?? 0, limite });
+        }
+      });
+  }, [user, profile]);
 
   useEffect(() => {
     if (!user) return;
@@ -847,6 +878,37 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* Uso de IA */}
+            {usoIA && (
+              <div className="bg-surface border border-border rounded-xl p-6">
+                <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">
+                  Uso de IA — este mês
+                </h3>
+                <div className="flex items-end justify-between mb-2">
+                  <span className="text-2xl font-extrabold text-slate-100">{usoIA.uso}</span>
+                  <span className="text-xs text-slate-500">de {usoIA.limite} gerações</span>
+                </div>
+                <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      usoIA.uso / usoIA.limite > 0.8
+                        ? "bg-gradient-to-r from-amber-500 to-red-500"
+                        : "bg-gradient-to-r from-blue-600 to-emerald-500"
+                    }`}
+                    style={{ width: `${Math.min(100, (usoIA.uso / usoIA.limite) * 100)}%` }}
+                  />
+                </div>
+                {usoIA.uso / usoIA.limite > 0.8 && (
+                  <Link
+                    href="/#planos"
+                    className="mt-3 block text-center text-xs font-semibold text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    Quase no limite — fazer upgrade →
+                  </Link>
+                )}
+              </div>
+            )}
+
             {/* Status do plano */}
             <div className="bg-surface border border-border rounded-xl p-6">
               <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4">
@@ -886,6 +948,14 @@ export default function DashboardPage() {
       </div>
 
     </AppShell>
+
+      {/* Onboarding modal */}
+      {showOnboarding && user && (
+        <OnboardingModal
+          userId={user.id}
+          nomeInicial={profile?.nome ?? ""}
+        />
+      )}
 
       {/* Dashboard AI Suggestion Modal — rendered outside AppShell to avoid stacking issues */}
       {modalSugestao && (

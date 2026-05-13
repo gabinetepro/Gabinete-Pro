@@ -12,33 +12,52 @@ import {
   UserCog,
   Settings,
   MessageSquare,
+  X,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/criar-conteudo", label: "Estúdio de Conteúdo", icon: PenSquare },
-  { href: "/kanban", label: "Cards de Conteúdo", icon: Layout },
-  { href: "/agenda", label: "Agenda", icon: Calendar },
-  { href: "/pautas", label: "Pautas", icon: FileText },
-  { href: "/eleitores", label: "Eleitores", icon: Users },
-  { href: "/demandas", label: "Demandas", icon: MessageSquare },
-  { href: "/equipe", label: "Equipe", icon: UserCog },
-  { href: "/configuracoes", label: "Configurações", icon: Settings },
+  { href: "/dashboard",      label: "Dashboard",           icon: LayoutDashboard },
+  { href: "/criar-conteudo", label: "Estúdio de Conteúdo", icon: PenSquare       },
+  { href: "/kanban",         label: "Cards de Conteúdo",   icon: Layout          },
+  { href: "/agenda",         label: "Agenda",              icon: Calendar        },
+  { href: "/pautas",         label: "Pautas",              icon: FileText        },
+  { href: "/eleitores",      label: "Eleitores",           icon: Users           },
+  { href: "/demandas",       label: "Demandas",            icon: MessageSquare   },
+  { href: "/equipe",         label: "Equipe",              icon: UserCog         },
+  { href: "/configuracoes",  label: "Configurações",       icon: Settings        },
 ];
 
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen?: boolean;
+  onClose?: () => void;
+}
+
+export default function Sidebar({ isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-64 bg-gradient-sidebar border-r border-border flex flex-col z-40">
-      <div className="p-6 border-b border-border">
-        <Link href="/dashboard" className="block">
+    <aside
+      className={`fixed left-0 top-0 h-screen w-64 bg-gradient-sidebar border-r border-border flex flex-col z-40 transition-transform duration-300
+        ${isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}
+    >
+      <div className="p-6 border-b border-border flex items-center justify-between">
+        <Link href="/dashboard" className="block" onClick={onClose}>
           <h1 className="text-xl font-extrabold tracking-tight flex items-center gap-1.5">
             <span style={{ fontFamily: "'Apple Color Emoji', 'Segoe UI Emoji', sans-serif" }}>🏛️</span>
-            <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent">Gabinete Pro</span>
+            <span className="bg-gradient-to-r from-blue-400 via-blue-300 to-emerald-400 bg-clip-text text-transparent">
+              Gabinete Pro
+            </span>
           </h1>
+          <p className="text-xs text-slate-500 mt-0.5">Gestão política inteligente</p>
         </Link>
-        <p className="text-xs text-slate-500 mt-0.5">Gestão política inteligente</p>
+        <button
+          onClick={onClose}
+          className="md:hidden text-slate-400 hover:text-slate-100 transition-colors ml-2 shrink-0"
+          aria-label="Fechar menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
@@ -48,6 +67,7 @@ export default function Sidebar() {
             <Link
               key={href}
               href={href}
+              onClick={onClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 active
                   ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-glow"
