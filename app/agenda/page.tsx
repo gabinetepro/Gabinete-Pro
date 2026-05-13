@@ -835,10 +835,11 @@ export default function AgendaPage() {
       </div>
 
       {/* Main layout */}
-      <div className="flex gap-4 items-start">
+      <div className="flex flex-col lg:flex-row gap-4 items-start">
 
         {/* Calendar */}
-        <div className="flex-1 min-w-0 bg-surface border border-border rounded-xl overflow-hidden">
+        <div className="flex-1 min-w-0 w-full overflow-x-auto">
+        <div className="min-w-[560px] bg-surface border border-border rounded-xl overflow-hidden">
           <div className="grid grid-cols-7 border-b border-border">
             {WEEK_DAYS.map(d => (
               <div key={d} className="py-2.5 text-center text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
@@ -940,9 +941,10 @@ export default function AgendaPage() {
             </div>
           )}
         </div>
+        </div>
 
         {/* Right sidebar */}
-        <div className="w-72 flex-shrink-0 space-y-4">
+        <div className="w-full lg:w-72 lg:flex-shrink-0 space-y-4">
 
           {/* Google Agenda card */}
           <GoogleCard
@@ -1118,7 +1120,7 @@ export default function AgendaPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Tipo</label>
               <select
@@ -1144,7 +1146,7 @@ export default function AgendaPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className={labelCls}>Hora início</label>
               <input

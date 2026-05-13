@@ -4,10 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
-// SQL needed:
-// ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS onboarding_completo boolean DEFAULT false;
-// ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS tom_de_voz text;
-
 const CARGOS = [
   "Vereador(a)",
   "Prefeito(a)",
@@ -27,9 +23,11 @@ const TONS = [
 interface Props {
   userId: string;
   nomeInicial?: string;
+  /** Called when the modal is dismissed (pular or backdrop click) — parent hides modal */
+  onClose: () => void;
 }
 
-export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
+export default function OnboardingModal({ userId, nomeInicial = "", onClose }: Props) {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [salvando, setSalvando] = useState(false);
@@ -40,7 +38,7 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
   const [partido, setPartido] = useState("");
   const [tom,     setTom]     = useState("");
 
-  async function salvarPerfil(concluir: boolean) {
+  async function salvarEFechar(irParaEstudio: boolean) {
     setSalvando(true);
     await supabase.from("profiles").update({
       ...(cargo   && { cargo }),
@@ -51,15 +49,29 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
       onboarding_completo: true,
     }).eq("id", userId);
     setSalvando(false);
-    router.push(concluir ? "/criar-conteudo" : "/dashboard");
+    onClose();
+    if (irParaEstudio) router.push("/criar-conteudo");
+  }
+
+  async function pular() {
+    await supabase.from("profiles")
+      .update({ onboarding_completo: true })
+      .eq("id", userId);
+    onClose();
   }
 
   const inputCls =
     "w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500";
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-[#0f172a] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl">
+    <div
+      className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4"
+      onClick={pular}
+    >
+      <div
+        className="bg-[#0f172a] border border-[#1e293b] rounded-2xl w-full max-w-lg shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Progress bar */}
         <div className="flex gap-1.5 p-5 pb-0">
           {[1, 2, 3, 4].map((i) => (
@@ -113,39 +125,20 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
                     <option key={c} value={c} className="text-white bg-slate-800">{c}</option>
                   ))}
                 </select>
-                <input
-                  type="text"
-                  placeholder="Seu nome completo"
-                  value={nome}
-                  onChange={(e) => setNome(e.target.value)}
-                  className={inputCls}
-                />
-                <input
-                  type="text"
-                  placeholder="Cidade onde atua"
-                  value={cidade}
-                  onChange={(e) => setCidade(e.target.value)}
-                  className={inputCls}
-                />
-                <input
-                  type="text"
-                  placeholder="Partido (ex: PT, PL, MDB...)"
-                  value={partido}
-                  onChange={(e) => setPartido(e.target.value)}
-                  className={inputCls}
-                />
+                <input type="text" placeholder="Seu nome completo"
+                  value={nome} onChange={(e) => setNome(e.target.value)} className={inputCls} />
+                <input type="text" placeholder="Cidade onde atua"
+                  value={cidade} onChange={(e) => setCidade(e.target.value)} className={inputCls} />
+                <input type="text" placeholder="Partido (ex: PT, PL, MDB...)"
+                  value={partido} onChange={(e) => setPartido(e.target.value)} className={inputCls} />
               </div>
               <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => setStep(1)}
-                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-slate-500 transition"
-                >
+                <button onClick={() => setStep(1)}
+                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-slate-500 transition">
                   ← Voltar
                 </button>
-                <button
-                  onClick={() => setStep(3)}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold text-sm hover:opacity-90 transition"
-                >
+                <button onClick={() => setStep(3)}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold text-sm hover:opacity-90 transition">
                   Continuar →
                 </button>
               </div>
@@ -161,20 +154,14 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {TONS.map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setTom(t.value)}
+                  <button key={t.value} onClick={() => setTom(t.value)}
                     className={`p-4 rounded-xl border text-left transition-all ${
                       tom === t.value
                         ? "border-blue-500 bg-blue-500/10"
                         : "border-slate-700 hover:border-slate-500 bg-slate-800/40"
                     }`}
                   >
-                    <p
-                      className={`text-sm font-semibold mb-1 ${
-                        tom === t.value ? "text-blue-300" : "text-slate-200"
-                      }`}
-                    >
+                    <p className={`text-sm font-semibold mb-1 ${tom === t.value ? "text-blue-300" : "text-slate-200"}`}>
                       {t.label}
                     </p>
                     <p className="text-xs text-slate-400">{t.desc}</p>
@@ -182,17 +169,12 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
                 ))}
               </div>
               <div className="flex gap-3 mt-6">
-                <button
-                  onClick={() => setStep(2)}
-                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-slate-500 transition"
-                >
+                <button onClick={() => setStep(2)}
+                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-slate-500 transition">
                   ← Voltar
                 </button>
-                <button
-                  onClick={() => setStep(4)}
-                  disabled={!tom}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
-                >
+                <button onClick={() => setStep(4)} disabled={!tom}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold text-sm hover:opacity-90 transition disabled:opacity-50">
                   Continuar →
                 </button>
               </div>
@@ -208,9 +190,7 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
               </p>
               <div className="bg-slate-800/40 border border-slate-700 rounded-xl p-5 mb-6">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shrink-0">
-                    📅
-                  </div>
+                  <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-lg shrink-0">📅</div>
                   <div>
                     <p className="text-sm font-semibold text-white">Google Calendar</p>
                     <p className="text-xs text-slate-400">Sincronização bidirecional</p>
@@ -222,17 +202,12 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
                 </p>
               </div>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setStep(3)}
-                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-slate-500 transition"
-                >
+                <button onClick={() => setStep(3)}
+                  className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-300 text-sm hover:border-slate-500 transition">
                   ← Voltar
                 </button>
-                <button
-                  onClick={() => salvarPerfil(true)}
-                  disabled={salvando}
-                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold text-sm hover:opacity-90 transition disabled:opacity-50"
-                >
+                <button onClick={() => salvarEFechar(true)} disabled={salvando}
+                  className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white font-semibold text-sm hover:opacity-90 transition disabled:opacity-50">
                   {salvando ? "Salvando..." : "Ir para o Estúdio →"}
                 </button>
               </div>
@@ -241,10 +216,7 @@ export default function OnboardingModal({ userId, nomeInicial = "" }: Props) {
         </div>
 
         <div className="px-6 pb-5 text-center">
-          <button
-            onClick={() => salvarPerfil(false)}
-            className="text-xs text-slate-500 hover:text-slate-300 transition"
-          >
+          <button onClick={pular} className="text-xs text-slate-500 hover:text-slate-300 transition">
             Pular configuração
           </button>
         </div>

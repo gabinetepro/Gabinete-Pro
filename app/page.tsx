@@ -577,6 +577,36 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* ── MENTORIA ── */}
+      <section className="py-16 bg-background">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="relative rounded-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/15 via-emerald-500/10 to-blue-600/15" />
+            <div className="absolute inset-0 rounded-2xl border border-blue-500/30" />
+            <div className="relative px-8 py-10 sm:py-12 flex flex-col sm:flex-row items-center gap-8">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/30 to-emerald-500/30 border border-blue-500/30 flex items-center justify-center text-3xl shrink-0">
+                ✨
+              </div>
+              <div className="text-center sm:text-left">
+                <p className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-2">Incluso nos planos Profissional e Gabinete</p>
+                <h2 className="text-xl sm:text-2xl font-extrabold text-slate-100 mb-2">
+                  Mentoria mensal com especialista em comunicação política
+                </h2>
+                <p className="text-slate-400 text-sm leading-relaxed max-w-xl">
+                  1 hora por mês com um especialista do nosso time para analisar as métricas do mandato, ajustar a estratégia de conteúdo e responder perguntas — ao vivo, só para você.
+                </p>
+              </div>
+              <Link
+                href="#planos"
+                className="shrink-0 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-emerald-500 text-white text-sm font-semibold hover:from-blue-500 hover:to-emerald-400 transition-all whitespace-nowrap"
+              >
+                Ver planos →
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── PLANOS ── */}
       <PlanosSection />
 

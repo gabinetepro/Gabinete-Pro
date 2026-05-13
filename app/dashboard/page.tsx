@@ -451,12 +451,18 @@ export default function DashboardPage() {
     if (!authLoading && user) loadData();
   }, [authLoading, user, loadData]);
 
-  // Check onboarding
+  // Check onboarding directly from DB (not cached profile)
   useEffect(() => {
-    if (profile && (profile as unknown as Record<string, unknown>).onboarding_completo === false) {
-      setShowOnboarding(true);
-    }
-  }, [profile]);
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("onboarding_completo")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.onboarding_completo === false) setShowOnboarding(true);
+      });
+  }, [user]);
 
   // Fetch uso IA do mês atual
   useEffect(() => {
@@ -591,7 +597,7 @@ export default function DashboardPage() {
       <div className="space-y-6">
 
         {/* ── Métricas ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <MetricCard
             title="Eleitores cadastrados"
             icon={Users}
@@ -954,6 +960,7 @@ export default function DashboardPage() {
         <OnboardingModal
           userId={user.id}
           nomeInicial={profile?.nome ?? ""}
+          onClose={() => setShowOnboarding(false)}
         />
       )}
 

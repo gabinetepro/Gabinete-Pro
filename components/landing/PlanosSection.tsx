@@ -9,16 +9,19 @@ type Periodo = "semestral" | "anual";
 const PLANOS = [
   {
     nome: "Essencial",
-    desc: "Para vereadores que trabalham de forma independente",
+    tag: "Para quem quer começar",
     usuarios: "1 usuário",
     ia: "150 gerações de IA/mês",
     features: [
-      "CRM de eleitores",
-      "Monitor de pautas",
+      "CRM de eleitores (até 500 contatos)",
+      "Gerador de conteúdo com IA",
       "Agenda + Google Calendar",
-      "Suporte incluso",
-      "Análise mensal com especialista do time",
+      "Monitor de pautas legislativas",
+      "Página pública de demandas",
+      "Kanban de conteúdo",
+      "Suporte por e-mail",
     ],
+    mentoria: false,
     cta: "Começar agora",
     destaque: false,
     semestral: { total: "R$997", mensal: "R$166" },
@@ -26,16 +29,17 @@ const PLANOS = [
   },
   {
     nome: "Profissional",
-    desc: "Para mandatos com equipe de assessoria",
+    tag: "Mais popular ⭐",
     usuarios: "Até 5 usuários",
     ia: "500 gerações de IA/mês",
     features: [
       "Tudo do plano Essencial",
-      "Cards de Conteúdo (Kanban)",
-      "Monitor de pautas avançado",
+      "CRM ilimitado de eleitores",
       "Gestão de equipe com permissões",
-      "Análise mensal com especialista do time",
+      "Relatórios e exportação CSV",
+      "Suporte prioritário",
     ],
+    mentoria: true,
     cta: "Começar agora",
     destaque: true,
     semestral: { total: "R$1.697", mensal: "R$283" },
@@ -43,16 +47,16 @@ const PLANOS = [
   },
   {
     nome: "Gabinete",
-    desc: "Para prefeitos e deputados com equipe completa",
+    tag: "Para prefeitos e deputados",
     usuarios: "Até 15 usuários",
     ia: "IA ilimitada",
     features: [
       "Tudo do plano Profissional",
       "Importação em massa de eleitores",
-      "Exportação CSV completa",
-      "Onboarding personalizado + suporte VIP",
-      "Análise mensal com especialista do time",
+      "Onboarding personalizado",
+      "Suporte VIP com SLA garantido",
     ],
+    mentoria: true,
     cta: "Falar com a equipe",
     destaque: false,
     semestral: { total: "R$2.697", mensal: "R$449" },
@@ -78,12 +82,12 @@ export default function PlanosSection() {
 
         {/* Toggle semestral / anual */}
         <div className="flex justify-center mb-12">
-          <div className="relative flex items-center bg-surface border border-border rounded-full p-1">
+          <div className="relative flex items-center bg-surface border border-border rounded-full p-1 gap-1">
             {(["semestral", "anual"] as Periodo[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriodo(p)}
-                className={`relative px-6 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                className={`relative flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
                   periodo === p
                     ? "bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow"
                     : "text-slate-400 hover:text-slate-200"
@@ -91,8 +95,12 @@ export default function PlanosSection() {
               >
                 {p === "semestral" ? "Semestral" : "Anual"}
                 {p === "anual" && (
-                  <span className="ml-2 text-[10px] font-bold text-emerald-300">
-                    -15%
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    periodo === "anual"
+                      ? "bg-white/20 text-white"
+                      : "bg-emerald-500/20 text-emerald-400"
+                  }`}>
+                    2 meses grátis
                   </span>
                 )}
               </button>
@@ -108,8 +116,8 @@ export default function PlanosSection() {
                 <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 blur-[2px] opacity-70" />
                 <div className="relative bg-surface rounded-xl p-8">
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <span className="px-4 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg">
-                      ★ Mais popular
+                    <span className="px-4 py-1 text-xs font-bold rounded-full bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg whitespace-nowrap">
+                      {plano.tag}
                     </span>
                   </div>
                   <PlanContent plano={plano} preco={preco} periodo={periodo} gradient />
@@ -144,14 +152,20 @@ function PlanContent({
 }) {
   return (
     <>
-      <h3 className="text-base font-bold text-slate-100 mb-1">{plano.nome}</h3>
-      <p className="text-xs text-slate-500 mb-6">{plano.desc}</p>
+      <div className="mb-5">
+        {!plano.destaque && (
+          <p className="text-xs text-slate-500 mb-1">{plano.tag}</p>
+        )}
+        <h3 className={`text-lg font-extrabold ${gradient ? "text-white" : "text-slate-100"}`}>
+          {plano.nome}
+        </h3>
+      </div>
 
-      <div className="mb-2">
+      <div className="mb-1">
         <span
           className={`text-4xl font-extrabold ${
             gradient
-              ? "bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent"
+              ? "bg-gradient-to-r from-blue-300 to-emerald-300 bg-clip-text text-transparent"
               : "text-slate-100"
           }`}
         >
@@ -159,24 +173,33 @@ function PlanContent({
         </span>
         <span className="text-slate-400 text-sm ml-1">/{periodo}</span>
       </div>
-      <p className="text-xs text-slate-500 mb-8">
+      <p className="text-xs text-slate-500 mb-7">
         {preco.mensal}/mês · cobrado {periodo === "anual" ? "anualmente" : "semestralmente"}
       </p>
 
-      <ul className="space-y-3 mb-8">
-        {[plano.usuarios, plano.ia, ...plano.features].map((f) => (
+      <ul className="space-y-2.5 mb-7">
+        <li className="flex items-start gap-2 text-sm text-slate-300">
+          <Check size={14} className="shrink-0 mt-0.5 text-emerald-400" />
+          {plano.usuarios}
+        </li>
+        <li className="flex items-start gap-2 text-sm text-slate-300">
+          <Check size={14} className="shrink-0 mt-0.5 text-emerald-400" />
+          {plano.ia}
+        </li>
+        {plano.features.map((f) => (
           <li key={f} className="flex items-start gap-2 text-sm text-slate-300">
-            <Check
-              size={14}
-              className={`shrink-0 mt-0.5 ${
-                f.startsWith("Análise mensal") ? "text-blue-400" : "text-emerald-400"
-              }`}
-            />
-            <span className={f.startsWith("Análise mensal") ? "text-blue-300 font-medium" : ""}>
-              {f}
-            </span>
+            <Check size={14} className="shrink-0 mt-0.5 text-emerald-400" />
+            {f}
           </li>
         ))}
+        {plano.mentoria && (
+          <li className="flex items-start gap-2 text-sm">
+            <Check size={14} className="shrink-0 mt-0.5 text-blue-400" />
+            <span className="text-blue-300 font-semibold">
+              ✨ Mentoria 1h/mês com especialista
+            </span>
+          </li>
+        )}
       </ul>
 
       <Link
