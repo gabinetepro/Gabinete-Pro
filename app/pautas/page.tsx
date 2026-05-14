@@ -908,7 +908,7 @@ export default function PautasPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 bg-slate-800/60 border border-slate-700/50 rounded-lg p-1 w-fit">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-800/60 border border-slate-700/50 rounded-lg p-1">
           {(
             [
               { key: "pautas-ia", icon: Sparkles,  label: "Pautas da IA",    count: pautasIA.length,        countCls: "bg-blue-500/30 text-blue-300"   },

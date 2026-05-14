@@ -1017,11 +1017,14 @@ function DashboardView({ userId }: { userId: string }) {
 function SkeletonRow() {
   return (
     <tr className="border-t border-slate-700/50">
-      {[40, 28, 24, 20, 28, 32, 20].map((w, i) => (
-        <td key={i} className="px-4 py-3">
-          <div className={`h-4 w-${w} rounded bg-slate-700/60 animate-pulse`} />
-        </td>
-      ))}
+      <td className="px-4 py-3"><div className="h-4 w-40 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3 hidden sm:table-cell"><div className="h-4 w-28 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3 hidden sm:table-cell"><div className="h-4 w-24 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3 hidden md:table-cell"><div className="h-4 w-20 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-28 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3 hidden md:table-cell"><div className="h-4 w-32 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3 hidden md:table-cell"><div className="h-4 w-20 rounded bg-slate-700/60 animate-pulse" /></td>
+      <td className="px-4 py-3"><div className="h-4 w-10 rounded bg-slate-700/60 animate-pulse" /></td>
     </tr>
   );
 }
@@ -1161,13 +1164,13 @@ export default function EleitoresPage() {
       ) : (
         <div className="space-y-4">
           {/* Stats strip */}
-          <div className="flex flex-wrap items-center gap-4 bg-slate-800/60 border border-slate-700/50 rounded-xl px-5 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-slate-800/60 border border-slate-700/50 rounded-xl px-5 py-3">
             <div className="flex items-center gap-2">
               <Users size={16} className="text-emerald-400" />
               <span className="text-sm font-semibold text-white">{total.toLocaleString("pt-BR")}</span>
               <span className="text-sm text-slate-400">eleitores</span>
             </div>
-            <div className="ml-auto flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap sm:ml-auto">
               <button
                 onClick={() => { setShowImportModal(true); }}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 text-slate-400 hover:text-slate-200 hover:bg-slate-700 transition-colors"
@@ -1275,11 +1278,14 @@ export default function EleitoresPage() {
               <table className="w-full">
                 <thead className="bg-slate-800/80">
                   <tr>
-                    {["Nome", "Telefone", "Bairro", "Cidade", "Engajamento", "Tags", "Cadastro", ""].map(h => (
-                      <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                        {h}
-                      </th>
-                    ))}
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Nome</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Telefone</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap hidden sm:table-cell">Bairro</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Cidade</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">Engajamento</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Tags</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap hidden md:table-cell">Cadastro</th>
+                    <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1314,16 +1320,16 @@ export default function EleitoresPage() {
                             <span className="text-sm font-medium text-slate-200 truncate max-w-40">{e.nome}</span>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-slate-400">{e.telefone ?? "—"}</td>
-                        <td className="px-4 py-3 text-sm text-slate-400">{e.bairro ?? "—"}</td>
-                        <td className="px-4 py-3 text-sm text-slate-400">{e.cidade ?? "—"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-400 hidden sm:table-cell">{e.telefone ?? "—"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-400 hidden sm:table-cell">{e.bairro ?? "—"}</td>
+                        <td className="px-4 py-3 text-sm text-slate-400 hidden md:table-cell">{e.cidade ?? "—"}</td>
                         <td className="px-4 py-3">
                           {e.engajamento
                             ? <span className={`text-xs px-2 py-0.5 rounded-full ${ENGAJAMENTO_BADGE[e.engajamento] ?? "bg-slate-500/20 text-slate-400"}`}>{e.engajamento}</span>
                             : <span className="text-slate-600 text-xs">—</span>
                           }
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 hidden md:table-cell">
                           <div className="flex flex-wrap gap-1 max-w-48">
                             {(e.tags ?? []).slice(0, 2).map(t => (
                               <span key={t} className="text-xs px-1.5 py-0.5 rounded-full bg-slate-700 text-slate-400 flex items-center gap-0.5">
@@ -1335,7 +1341,7 @@ export default function EleitoresPage() {
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap">{fmtDate(e.created_at)}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500 whitespace-nowrap hidden md:table-cell">{fmtDate(e.created_at)}</td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <Link href={`/eleitores/${e.id}`} className="p-1.5 rounded hover:bg-slate-600 text-slate-400 hover:text-slate-200 transition-colors" title="Ver perfil">
